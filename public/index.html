@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#6c5ce7">
+<title>Caça-Palavras Maluco</title>
+<meta name="description" content="Caça-palavras multiplayer: todo mundo no mesmo quadro, 3 minutos pra achar o máximo de palavras.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%23ffb14e'/><text x='50' y='72' font-size='64' text-anchor='middle' font-family='Arial Black' fill='white'>P</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="ceu" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+
+<div class="sons">
+  <button id="btnMusica" class="redondo" aria-label="Música">🎵</button>
+  <button id="btnEfeitos" class="redondo" aria-label="Efeitos sonoros">🔔</button>
+</div>
+
+<!-- INÍCIO -->
+<section id="telaInicio" class="tela ativa">
+  <h1 class="logo" aria-label="Caça-Palavras Maluco">
+    <span class="l1">CAÇA</span><span class="l2">PALAVRAS</span><span class="l3">maluco!</span>
+  </h1>
+  <p class="sub">Todo mundo no <b>mesmo quadro</b>. <b>3 minutos</b>. Quem acha mais palavras?</p>
+
+  <div class="cartao perfil-card">
+    <div id="perfilResumo" class="perfil-resumo">
+      <button id="btnEditar" class="avatar-btn" aria-label="Personalizar meu boneco"></button>
+      <div class="perfil-info">
+        <div id="tagResumo" class="tag-resumo">—</div>
+        <div class="nivel-linha"><span id="nivelResumo" class="nivel">Nv 1</span><div class="xp"><div id="xpBarra"></div></div></div>
+        <button id="btnEditar2" class="mini">✏️ Personalizar</button>
+      </div>
+    </div>
+    <div id="criarTag" class="criar-tag" hidden>
+      <label class="rotulo" for="nome">Crie seu gamertag</label>
+      <input id="nome" maxlength="14" placeholder="ex: Rei_das_Letras" autocomplete="nickname">
+      <small class="dica">3 a 14 letras, números ou _</small>
+      <button id="btnSalvarTag" class="botao roxo">Pronto!</button>
+    </div>
+    <div id="contaLinha" class="conta-linha"></div>
+  </div>
+
+  <div class="cartao">
+    <div id="blocoOnline">
+      <button id="btnCriar" class="botao rosa">✨ Criar sala</button>
+      <div class="ou">ou entre numa sala</div>
+      <div class="linha-codigo">
+        <input id="codigo" maxlength="4" placeholder="CÓDIGO" autocapitalize="characters" autocomplete="off">
+        <button id="btnEntrar" class="botao azul">Entrar</button>
+      </div>
+    </div>
+    <p id="avisoOffline" class="aviso" hidden>O modo online ainda não foi ligado neste site. Dá pra treinar sozinho!</p>
+    <button id="btnSolo" class="botao verde">🎯 Treinar sozinho</button>
+  </div>
+
+  <details class="regras">
+    <summary>Como jogar?</summary>
+    <ul>
+      <li>Arraste o dedo ligando letras vizinhas (até na diagonal). A palavra é lida <b>na ordem em que você liga</b>.</li>
+      <li>Mínimo de 3 letras. Cada letra do quadro só vale uma vez por palavra.</li>
+      <li>As letras não têm acento: se a palavra só existe com acento (tipo <b>CORAÇÃO</b>), o jogo coloca sozinho.</li>
+      <li>Pontos: 3 letras = 1 · 4 = 2 · 5 = 3 · 6 = 5 · 7 = 7 · 8 = 10 · e mais ainda acima disso!</li>
+      <li>Enquanto o dedo estiver na tela é uma palavra só. Soltou, o jogo confere.</li>
+      <li>Palavra que só <b>você</b> achou vale o <b>dobro</b>!</li>
+    </ul>
+  </details>
+  <p id="erroInicio" class="erro" role="alert"></p>
+</section>
+
+<!-- PERSONALIZAR -->
+<section id="telaPerfil" class="tela">
+  <div class="cartao editor-topo">
+    <div id="previaGrande" class="previa-grande"></div>
+    <div class="editor-tag">
+      <label class="rotulo" for="tagEdit">Gamertag</label>
+      <input id="tagEdit" maxlength="14" autocomplete="nickname">
+      <div class="nivel-linha"><span id="nivelEditor" class="nivel">Nv 1</span><div class="xp"><div id="xpBarraEd"></div></div></div>
+      <small id="xpTexto" class="dica"></small>
+    </div>
+  </div>
+  <div id="abasPartes" class="abas"></div>
+  <div id="itensParte" class="itens cartao"></div>
+  <button id="btnSalvarPerfil" class="botao rosa enorme">💾 Salvar</button>
+  <button id="btnVoltarPerfil" class="link">Voltar sem salvar</button>
+  <p id="erroPerfil" class="erro" role="alert"></p>
+</section>
+
+<!-- SALA DE ESPERA -->
+<section id="telaSala" class="tela">
+  <div class="cartao">
+    <div class="rotulo">Código da sala</div>
+    <div id="codigoSala" class="codigo-grande">----</div>
+    <button id="btnCompartilhar" class="botao amarelo">📲 Chamar a galera</button>
+  </div>
+  <div class="cartao">
+    <div class="rotulo">Jogadores <span id="qtdJog"></span></div>
+    <ul id="listaJog" class="lista-jog"></ul>
+  </div>
+  <div class="cartao" id="opcoesHost">
+    <label class="chave">
+      <input type="checkbox" id="chkFamilia">
+      <span class="trilho"></span>
+      <span>Modo família <small>(palavrões não valem)</small></span>
+    </label>
+  </div>
+  <button id="btnComecar" class="botao rosa enorme">🚀 Começar!</button>
+  <p id="esperando" class="sub">Esperando quem criou a sala começar…</p>
+  <button id="btnSairSala" class="link">Sair da sala</button>
+</section>
+
+<!-- JOGO -->
+<section id="telaJogo" class="tela">
+  <div class="topo-jogo">
+    <div class="tempo"><div id="barraTempo" class="barra"></div><span id="txtTempo">3:00</span></div>
+    <div class="meus-pontos"><span id="meusPontos">0</span><small>pts</small></div>
+  </div>
+  <div id="placarVivo" class="placar-vivo"></div>
+  <div class="bolha-wrap"><div id="bolha" class="bolha"></div></div>
+  <div class="tabuleiro-wrap">
+    <div id="tabuleiro" class="tabuleiro"></div>
+    <div id="contagem" class="contagem" hidden>3</div>
+  </div>
+  <div class="achadas-wrap">
+    <div class="rotulo"><span id="qtdAchadas">0</span> palavras</div>
+    <div id="achadas" class="achadas"></div>
+  </div>
+  <button id="btnSairJogo" class="link">Sair</button>
+</section>
+
+<!-- RECAPITULAÇÃO -->
+<section id="telaRecap" class="tela">
+  <div class="recap-topo">
+    <div id="recapSecao" class="recap-secao"></div>
+    <div id="recapProg" class="recap-prog"></div>
+  </div>
+  <div id="recapPalco" class="recap-palco"></div>
+  <div id="recapCtl" class="recap-ctl">
+    <button id="btnPausa" class="botao amarelo">⏸ Pausar</button>
+    <button id="btnPular" class="botao azul">⏭ Pular</button>
+  </div>
+  <p id="recapAviso" class="sub"></p>
+</section>
+
+<!-- RESULTADO -->
+<section id="telaFim" class="tela">
+  <h2 class="titulo-fim">🏁 Fim de jogo!</h2>
+  <div id="podio" class="podio"></div>
+  <div id="ganhos" class="cartao ganhos"></div>
+  <div id="ranking" class="cartao ranking"></div>
+  <div class="cartao">
+    <div class="rotulo">🔎 Palavras que ninguém achou</div>
+    <div id="escondidas" class="achadas soltas"></div>
+  </div>
+  <button id="btnDeNovo" class="botao rosa enorme">🔁 Jogar de novo</button>
+  <p id="esperandoNovo" class="sub">Esperando quem criou a sala começar outra…</p>
+  <button id="btnSairFim" class="link">Voltar ao início</button>
+</section>
+
+<div id="carregando" class="carregando" hidden><div class="pulo">📚</div><p>Carregando o dicionário…</p></div>
+<div id="toast" class="toast"></div>
+<div id="confete" class="confete" aria-hidden="true"></div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

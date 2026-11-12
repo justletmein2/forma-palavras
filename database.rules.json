@@ -1,0 +1,43 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "cacapalavras": {
+      "rooms": {
+        "$code": {
+          ".read": "auth != null && $code.matches(/^[A-Z]{4}$/)",
+          "meta": {
+            ".write": "auth != null && $code.matches(/^[A-Z]{4}$/) && (!data.exists() || data.child('host').val() === auth.uid || root.child('cacapalavras/rooms/' + $code + '/players/' + data.child('host').val() + '/online').val() !== true)",
+            ".validate": "newData.hasChildren(['host', 'status'])",
+            "grid": { ".validate": "newData.isString() && newData.val().length === 36" },
+            "status": { ".validate": "newData.val() === 'lobby' || newData.val() === 'playing' || newData.val() === 'ended'" }
+          },
+          "players": {
+            "$uid": {
+              ".write": "auth != null && auth.uid === $uid",
+              "name": { ".validate": "newData.isString() && newData.val().length <= 14" },
+              "words": {
+                "$w": { ".validate": "$w.matches(/^[a-z]{3,16}$/) && newData.isNumber()" }
+              }
+            }
+          }
+        }
+      },
+      "profiles": {
+        "$uid": {
+          ".read": "auth != null",
+          ".write": "auth != null && auth.uid === $uid",
+          "tag": { ".validate": "newData.isString() && newData.val().length >= 3 && newData.val().length <= 14" },
+          "xp": { ".validate": "newData.isNumber() && newData.val() >= 0" }
+        }
+      },
+      "tags": {
+        "$tag": {
+          ".read": "auth != null",
+          ".write": "auth != null && (!data.exists() || data.val() === auth.uid)",
+          ".validate": "newData.val() === auth.uid"
+        }
+      }
+    }
+  }
+}
