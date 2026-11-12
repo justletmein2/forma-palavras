@@ -301,7 +301,12 @@ function voltarAoInicio() {
 }
 $('btnSairSala').onclick = voltarAoInicio;
 $('btnSairFim').onclick = voltarAoInicio;
-$('btnSairJogo').onclick = () => { if (confirm('Sair da partida?')) voltarAoInicio(); };
+let sairArmado = 0;
+$('btnSairJogo').onclick = () => {
+  // confirmação dentro da página (sem janelinha do navegador)
+  if (Date.now() - sairArmado < 2500) { voltarAoInicio(); return; }
+  sairArmado = Date.now(); toast('Toque em "Sair" de novo pra sair da partida');
+};
 
 const souHost = () => S.modo !== 'online' || (S.meta && S.meta.host === net.meuId());
 const jogadoresDaRodada = () => Object.entries(S.players).filter(([, p]) => p.round === S.round).map(([id, p]) => ({ id, ...p }));
@@ -359,9 +364,13 @@ $('btnCompartilhar').onclick = async () => {
   const url = location.origin + location.pathname + '?sala=' + S.code;
   const texto = `Bora jogar Caça-Palavras Maluco! Sala ${S.code}`;
   try {
-    if (navigator.share) await navigator.share({ title: 'Caça-Palavras Maluco', text: texto, url });
-    else { await navigator.clipboard.writeText(url); toast('Link copiado! Manda pra galera 📲'); }
-  } catch { /* cancelou */ }
+    if (!navigator.share) throw new Error('sem share');
+    await navigator.share({ title: 'Caça-Palavras Maluco', text: texto, url });
+  } catch (e) {
+    if (e && e.name === 'AbortError') return; // a pessoa cancelou
+    try { await navigator.clipboard.writeText(url); toast('Link copiado! Manda pra galera 📲'); }
+    catch { toast('Mande este link: ' + url); }
+  }
 };
 
 async function comecarOnline() {
