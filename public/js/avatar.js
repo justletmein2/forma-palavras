@@ -3,7 +3,11 @@
 
 export const CATALOGO = {
   tipo: [
-    { id: 'pessoa', nome: 'Pessoa' }, { id: 'caramelo', nome: 'Cachorrinha caramelo' }, { id: 'morcego', nome: 'Morceguinho' },
+    { id: 'pessoa', nome: 'Pessoa' }, { id: 'caramelo', nome: 'Carmelinha' }, { id: 'morcego', nome: 'Drácula' },
+    { id: 'passaro', nome: 'Passarinho' },
+  ],
+  // cores do passarinho (funciona como o tom de pele)
+  plumagem: [
     { id: 'sanhaco', nome: 'Sanhaço' }, { id: 'maritaca', nome: 'Maritaca' }, { id: 'sabia', nome: 'Sabiá' },
   ],
   pele: [
@@ -73,13 +77,24 @@ export const CATALOGO = {
 };
 
 export const PARTES = [
-  ['tipo', 'Personagem'], ['pele', 'Pele'], ['cabelo', 'Cabelo'], ['corCabelo', 'Cor do cabelo'], ['barba', 'Barba'], ['olhos', 'Olhos'], ['boca', 'Boca'],
+  ['tipo', 'Personagem'], ['plumagem', 'Cor das penas'], ['pele', 'Pele'], ['cabelo', 'Cabelo'], ['corCabelo', 'Cor do cabelo'], ['barba', 'Barba'], ['olhos', 'Olhos'], ['boca', 'Boca'],
   ['roupa', 'Roupa'], ['corRoupa', 'Cor da roupa'], ['chapeu', 'Chapéu'], ['acessorio', 'Acessório'], ['fundo', 'Fundo'],
 ];
 
 // Partes que valem para os bichinhos (o resto é só para pessoa)
 export const PARTES_BICHO = ['tipo', 'olhos', 'corRoupa', 'chapeu', 'acessorio', 'fundo'];
-export const ehBicho = look => !!look && !!look.tipo && look.tipo !== 'pessoa';
+// partes que aparecem em cada personagem
+export function partesDe(look) {
+  const t = normalizar(look).tipo || 'pessoa';
+  if (t === 'pessoa') return PARTES.filter(([k]) => k !== 'plumagem').map(([k]) => k);
+  return t === 'passaro' ? ['tipo', 'plumagem', ...PARTES_BICHO.slice(1)] : PARTES_BICHO;
+}
+// looks antigos guardavam cada pássaro como um personagem separado
+export function normalizar(look = {}) {
+  if (['sanhaco', 'maritaca', 'sabia'].includes(look.tipo)) return { ...look, tipo: 'passaro', plumagem: look.tipo };
+  return look;
+}
+export const ehBicho = look => !!look && !!look.tipo && normalizar(look).tipo !== 'pessoa';
 
 export const CONQUISTAS = {
   vitoria: 'Vencer uma partida com 2+ jogadores',
@@ -91,7 +106,7 @@ export const CONQUISTAS = {
 export function lookPadrao() {
   const r = a => a.filter(x => !x.lvl && !x.ach)[Math.floor(Math.random() * a.filter(x => !x.lvl && !x.ach).length)].id;
   return {
-    tipo: 'pessoa', barba: 'nada',
+    tipo: 'pessoa', barba: 'nada', plumagem: 'sanhaco',
     pele: r(CATALOGO.pele), cabelo: r(CATALOGO.cabelo), corCabelo: r(CATALOGO.corCabelo), olhos: 'normal', boca: 'sorriso',
     roupa: 'camiseta', corRoupa: r(CATALOGO.corRoupa), chapeu: 'nada', acessorio: 'nada', fundo: r(CATALOGO.fundo),
   };
@@ -107,7 +122,7 @@ const pega = (parte, id) => CATALOGO[parte].find(x => x.id === id) || CATALOGO[p
 let uid = 0;
 // Desenha o boneco. Retorna uma string <svg>.
 export function avatarSVG(look = {}, tam = 64) {
-  const L = { ...BASE, ...look };
+  const L = { ...BASE, ...normalizar(look) };
   const k = 'a' + (++uid);
   const pele = pega('pele', L.pele).cor;
   const cab = pega('corCabelo', L.corCabelo).cor.replace('#arco', '#' + k + 'arco');
@@ -121,7 +136,7 @@ export function avatarSVG(look = {}, tam = 64) {
   s.push(`<g clip-path="url(#${k}c)">`);
 
   const bicho = ehBicho(L);
-  if (bicho) s.push(desenharBicho(L.tipo, roupa));
+  if (bicho) s.push(desenharBicho(L.tipo === 'passaro' ? L.plumagem : L.tipo, roupa));
   else {
   // cabelo de trás
   const atras = {
@@ -179,7 +194,7 @@ export function avatarSVG(look = {}, tam = 64) {
     lenhador: `<path d="M26 44 Q24 86 50 90 Q76 86 74 44 Q68 62 58 59 Q50 56 42 59 Q32 62 26 44Z" fill="${cab}"/>`,
   }[L.barba] || '');
   // boca (ou focinho/bico)
-  if (bicho) s.push(focinho(L.tipo));
+  if (bicho) s.push(focinho(L.tipo === 'passaro' ? L.plumagem : L.tipo));
   else s.push({
     sorriso: `<path d="M43 58 Q50 64 57 58" fill="none" stroke="${esc}" stroke-width="2.4" stroke-linecap="round"/>`,
     risada: `<path d="M42 57 Q50 68 58 57 Z" fill="${esc}"/><path d="M45 61 Q50 64 55 61" fill="#ff7e9e"/>`,
@@ -239,7 +254,7 @@ export function avatarSVG(look = {}, tam = 64) {
   s.push('</g>');
   return `<svg class="boneco" viewBox="0 0 100 100" width="${tam}" height="${tam}" role="img" aria-label="avatar">${s.join('')}</svg>`;
 }
-const BASE = { tipo: 'pessoa', barba: 'nada', pele: 'p2', cabelo: 'curto', corCabelo: 'castanho', olhos: 'normal', boca: 'sorriso', roupa: 'camiseta', corRoupa: 'azul', chapeu: 'nada', acessorio: 'nada', fundo: 'lilas' };
+const BASE = { tipo: 'pessoa', barba: 'nada', plumagem: 'sanhaco', pele: 'p2', cabelo: 'curto', corCabelo: 'castanho', olhos: 'normal', boca: 'sorriso', roupa: 'camiseta', corRoupa: 'azul', chapeu: 'nada', acessorio: 'nada', fundo: 'lilas' };
 
 // ---------- níveis ----------
 // Nível n precisa de 50·n·(n−1) de XP: 2→100, 3→300, 4→600, 5→1000...
@@ -275,10 +290,10 @@ function desenharBicho(tipo, roupa) {
     const c = '#d99a4e', claro = '#f6d7a7', esc = '#a8682c';
     return `<path d="M18 100 Q20 74 50 72 Q80 74 82 100 Z" fill="${c}"/><ellipse cx="50" cy="96" rx="14" ry="14" fill="${claro}"/>
       ${lenco(roupa)}
+      <path d="M33 38 L3 33 Q8 41 33 54 Z M67 38 L97 33 Q92 41 67 54 Z" fill="${c}"/>
+      <path d="M31 41 L12 37.5 Q16 42 31 49 Z M69 41 L88 37.5 Q84 42 69 49 Z" fill="${claro}" opacity=".7"/>
       <ellipse cx="50" cy="46" rx="23" ry="22" fill="${c}"/>
-      <path d="M44 25 Q50 22 56 25 Q54 36 50 40 Q46 36 44 25Z" fill="${claro}" opacity=".7"/>
-      <ellipse cx="25" cy="48" rx="8" ry="16" transform="rotate(18 25 48)" fill="${esc}"/>
-      <ellipse cx="75" cy="48" rx="8" ry="16" transform="rotate(-18 75 48)" fill="${esc}"/>`;
+      <path d="M44 25 Q50 22 56 25 Q54 36 50 40 Q46 36 44 25Z" fill="${claro}" opacity=".7"/>`;
   }
   if (tipo === 'morcego') {
     const c = '#6b5b8e', esc = '#4a3d66', rosa = '#f2a7c3';

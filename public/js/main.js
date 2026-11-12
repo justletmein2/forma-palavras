@@ -1,6 +1,6 @@
 import { loadDict, dictReady, lookup, pontos, gerarGrade, resolver, exibir, raridade, semAcento } from './dict.js';
 import { criarTabuleiro } from './board.js';
-import { avatarSVG, CATALOGO, PARTES, PARTES_BICHO, ehBicho, CONQUISTAS, lookPadrao, liberado, nivelDe, faixaNivel, itensNovos } from './avatar.js';
+import { avatarSVG, CATALOGO, PARTES, partesDe, normalizar, CONQUISTAS, lookPadrao, liberado, nivelDe, faixaNivel, itensNovos } from './avatar.js';
 import { montarRecap, passoEm } from './recap.js';
 import * as som from './audio.js';
 import * as net from './net.js';
@@ -181,7 +181,7 @@ $('btnSalvarTag').onclick = async () => {
 // ---------- editor do boneco ----------
 let rascunho = null, abaAtual = 'tipo';
 function abrirEditor() {
-  rascunho = { ...P.look };
+  rascunho = { tipo: 'pessoa', plumagem: 'sanhaco', ...normalizar(P.look) };
   $('tagEdit').value = P.tag;
   const f = faixaNivel(P.xp || 0);
   $('nivelEditor').textContent = 'Nv ' + f.n;
@@ -194,7 +194,8 @@ function abrirEditor() {
 function desenharEditor() {
   $('previaGrande').innerHTML = avatarSVG(rascunho, 110);
   // bichinho não tem pele, cabelo, barba, boca nem roupa: mostra só o que vale pra ele
-  const partes = ehBicho(rascunho) ? PARTES.filter(([k]) => PARTES_BICHO.includes(k)).map(([k, n]) => [k, k === 'corRoupa' ? 'Lencinho' : n]) : PARTES;
+  const visiveis = partesDe(rascunho), bicho = rascunho.tipo !== 'pessoa';
+  const partes = PARTES.filter(([k]) => visiveis.includes(k)).map(([k, n]) => [k, bicho && k === 'corRoupa' ? 'Lencinho' : n]);
   if (!partes.some(([k]) => k === abaAtual)) abaAtual = 'tipo';
   $('abasPartes').innerHTML = partes.map(([k, nome]) => `<button class="aba ${k === abaAtual ? 'on' : ''}" data-k="${k}">${nome}</button>`).join('');
   const n = nivel();
