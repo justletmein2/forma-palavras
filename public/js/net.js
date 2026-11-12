@@ -11,7 +11,7 @@ const V = '11.0.2';
 const LOCAL = new URLSearchParams(location.search).has('local');
 let B = null;          // backend
 let uid = null, offset = 0;
-let authInfo = { google: false, email: null, foto: null };
+let authInfo = { logado: false, tipo: null, email: null };
 
 export function onlineDisponivel() { return LOCAL || !!(firebaseConfig && firebaseConfig.apiKey && firebaseConfig.databaseURL); }
 export const modoLocal = () => LOCAL;
@@ -31,7 +31,9 @@ async function backendFirebase() {
   const lerAuth = () => {
     const u = auth.currentUser;
     const g = u.providerData.find(p => p.providerId === 'google.com');
-    authInfo = { google: !!g, email: g?.email || null, foto: g?.photoURL || null };
+    const e = u.providerData.find(p => p.providerId === 'password');
+    const conta = g || e;
+    authInfo = { logado: !!conta, tipo: g ? 'google' : e ? 'email' : null, email: conta?.email || null };
     return u.uid;
   };
   D.onValue(D.ref(db, '.info/serverTimeOffset'), s => { offset = s.val() || 0; });
@@ -56,7 +58,14 @@ async function backendFirebase() {
       }
       return lerAuth();
     },
-    async sairGoogle() { await A.signOut(auth); await A.signInAnonymously(auth); return lerAuth(); },
+    // E-mail e senha: "criar" liga a conta nova ao progresso de quem já está jogando
+    async criarContaEmail(email, senha) {
+      await A.linkWithCredential(auth.currentUser, A.EmailAuthProvider.credential(email, senha));
+      return lerAuth();
+    },
+    async entrarEmail(email, senha) { await A.signInWithEmailAndPassword(auth, email, senha); return lerAuth(); },
+    async esqueciSenha(email) { auth.languageCode = 'pt-BR'; await A.sendPasswordResetEmail(auth, email); },
+    async sair() { await A.signOut(auth); await A.signInAnonymously(auth); return lerAuth(); },
   };
 }
 
@@ -125,7 +134,10 @@ function backendLocal() {
     on: (p, cb) => { const o = [p, cb]; ouvintes.push(o); setTimeout(() => cb(structuredClone(pegar(ler(), p)))); return () => ouvintes.splice(ouvintes.indexOf(o), 1); },
     aoSair: (p, v) => saidas.push([p, v]),
     async loginGoogle() { throw new Error('Login com Google não funciona no modo de teste'); },
-    async sairGoogle() { return id; },
+    async criarContaEmail() { throw new Error('Login não funciona no modo de teste'); },
+    async entrarEmail() { throw new Error('Login não funciona no modo de teste'); },
+    async esqueciSenha() { throw new Error('Login não funciona no modo de teste'); },
+    async sair() { return id; },
   };
 }
 
@@ -142,7 +154,7 @@ export function conectar() {
 export const conectado = () => !!B;
 export const agora = () => Date.now() + offset;
 export const meuId = () => uid;
-export const contaGoogle = () => authInfo;
+export const conta = () => authInfo;
 
 // ---------- perfil ----------
 export async function lerPerfil() { return (await B.get('profiles/' + uid)) || null; }
@@ -162,7 +174,10 @@ export async function reservarTag(tag, antiga) {
 }
 
 export async function loginGoogle() { uid = await B.loginGoogle(); return uid; }
-export async function sairGoogle() { uid = await B.sairGoogle(); return uid; }
+export async function sair() { uid = await B.sair(); return uid; }
+export async function criarContaEmail(email, senha) { uid = await B.criarContaEmail(email, senha); return uid; }
+export async function entrarEmail(email, senha) { uid = await B.entrarEmail(email, senha); return uid; }
+export const esqueciSenha = email => B.esqueciSenha(email);
 
 // ---------- salas ----------
 const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';

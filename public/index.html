@@ -44,6 +44,20 @@
       <button id="btnSalvarTag" class="botao roxo">Pronto!</button>
     </div>
     <div id="contaLinha" class="conta-linha"></div>
+    <form id="formEmail" class="form-email" hidden onsubmit="return false">
+      <label class="rotulo" for="emailLogin">Entrar com e-mail</label>
+      <input id="emailLogin" type="email" placeholder="seu@email.com" autocomplete="email" inputmode="email">
+      <input id="senhaLogin" type="password" placeholder="Senha (6 ou mais caracteres)" autocomplete="current-password">
+      <div class="linha-botoes">
+        <button id="btnCriarConta" type="button" class="botao roxo">Criar conta</button>
+        <button id="btnJaTenho" type="button" class="botao azul">Já tenho conta</button>
+      </div>
+      <p id="erroEmail" class="dica msg-email" role="alert"></p>
+      <div class="linha-botoes">
+        <button id="btnEsqueci" type="button" class="mini">Esqueci a senha</button>
+        <button id="btnCancelarEmail" type="button" class="mini">Cancelar</button>
+      </div>
+    </form>
   </div>
 
   <div class="cartao">

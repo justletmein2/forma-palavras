@@ -135,27 +135,69 @@ function desenharInicio() {
   if (!net.onlineDisponivel()) conta.textContent = 'Seu progresso fica salvo neste aparelho.';
   else if (net.modoLocal()) conta.textContent = '🧪 Modo de teste local';
   else if (net.conectado()) {
-    const g = net.contaGoogle();
-    conta.innerHTML = g.google
-      ? `✅ Progresso salvo na conta Google <b>${esc(g.email || '')}</b> <button id="btnSairGoogle" class="mini">Sair</button>`
-      : `<button id="btnGoogle" class="botao-google"><b style="color:#4285f4">G</b> Entrar com Google</button><span>pra não perder seu boneco se trocar de celular</span>`;
-    const bg = $('btnGoogle'), bs = $('btnSairGoogle');
+    const c = net.conta();
+    conta.innerHTML = c.logado
+      ? `✅ Progresso salvo ${c.tipo === 'google' ? 'na conta Google' : 'no e-mail'} <b>${esc(c.email || '')}</b> <button id="btnSair" class="mini">Sair</button>`
+      : `<span>Salve seu progresso pra não perder o boneco se trocar de celular:</span>
+         <button id="btnGoogle" class="botao-google"><b style="color:#4285f4">G</b> Google</button>
+         <button id="btnEmail" class="botao-google">✉️ E-mail</button>`;
+    const bg = $('btnGoogle'), be = $('btnEmail'), bs = $('btnSair');
     if (bg) bg.onclick = entrarGoogle;
-    if (bs) bs.onclick = async () => { await net.sairGoogle(); P = { tag: '', look: lookPadrao(), xp: 0, games: 0, wins: 0, ach: {}, pagas: [] }; guardarLocal(); desenharInicio(); };
+    if (be) be.onclick = () => { $('formEmail').hidden = false; $('erroEmail').textContent = ''; $('emailLogin').focus(); };
+    if (bs) bs.onclick = async () => { await net.sair(); P = { tag: '', look: lookPadrao(), xp: 0, games: 0, wins: 0, ach: {}, pagas: [] }; guardarLocal(); desenharInicio(); };
+    if (c.logado) $('formEmail').hidden = true;
   }
 }
 
+// Depois de entrar numa conta: usa o perfil dela, ou guarda nela o progresso atual
+async function depoisDeEntrar(onde) {
+  const remoto = await net.lerPerfil();
+  if (remoto && remoto.tag) { P = { ...P, ...remoto }; guardarLocal(); toast('Bem-vindo de volta, ' + P.tag + '!'); }
+  else { if (P.tag) await net.reservarTag(P.tag); await guardar(); toast('Pronto! Seu progresso fica salvo ' + onde); }
+}
+
 async function entrarGoogle() {
-  try {
-    await net.loginGoogle();
-    const remoto = await net.lerPerfil();
-    if (remoto && remoto.tag) { P = { ...P, ...remoto }; guardarLocal(); toast('Bem-vindo de volta, ' + P.tag + '!'); }
-    else { if (P.tag) await net.reservarTag(P.tag); await guardar(); toast('Pronto! Seu progresso fica salvo na conta Google'); }
-  } catch (e) {
+  try { await net.loginGoogle(); await depoisDeEntrar('na conta Google'); }
+  catch (e) {
     if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') toast('Não deu pra entrar: ' + (e.message || e));
   }
   desenharInicio();
 }
+
+// ---------- login com e-mail ----------
+function erroDeLogin(e) {
+  const c = e && e.code;
+  if (c === 'auth/email-already-in-use') return 'Esse e-mail já tem conta. Toque em "Já tenho conta".';
+  if (c === 'auth/invalid-email') return 'Esse e-mail não parece certo.';
+  if (c === 'auth/weak-password' || c === 'auth/missing-password') return 'A senha precisa de pelo menos 6 caracteres.';
+  if (c === 'auth/invalid-credential' || c === 'auth/wrong-password' || c === 'auth/user-not-found' || c === 'auth/invalid-login-credentials')
+    return 'E-mail ou senha errados. Se ainda não tem conta, toque em "Criar conta".';
+  if (c === 'auth/too-many-requests') return 'Muitas tentativas. Espere alguns minutos e tente de novo.';
+  if (c === 'auth/operation-not-allowed') return 'Login por e-mail ainda não foi ligado no Firebase.';
+  if (c === 'auth/network-request-failed') return 'Sem internet agora. Tente de novo.';
+  return 'Não deu certo: ' + ((e && e.message) || e);
+}
+async function loginEmail(criar) {
+  const email = $('emailLogin').value.trim(), senha = $('senhaLogin').value;
+  if (!email || !senha) { $('erroEmail').textContent = 'Preencha o e-mail e a senha.'; return; }
+  const bs = [$('btnCriarConta'), $('btnJaTenho')]; bs.forEach(b => b.disabled = true);
+  try {
+    if (criar) await net.criarContaEmail(email, senha); else await net.entrarEmail(email, senha);
+    await depoisDeEntrar('no seu e-mail');
+    $('senhaLogin').value = ''; $('formEmail').hidden = true;
+  } catch (e) { $('erroEmail').textContent = erroDeLogin(e); }
+  bs.forEach(b => b.disabled = false);
+  desenharInicio();
+}
+$('btnCriarConta').onclick = () => loginEmail(true);
+$('btnJaTenho').onclick = () => loginEmail(false);
+$('btnCancelarEmail').onclick = () => { $('formEmail').hidden = true; };
+$('btnEsqueci').onclick = async () => {
+  const email = $('emailLogin').value.trim();
+  if (!email) { $('erroEmail').textContent = 'Escreva seu e-mail primeiro.'; return; }
+  try { await net.esqueciSenha(email); $('erroEmail').textContent = '📩 Se esse e-mail tiver conta, chega um link pra criar uma senha nova.'; }
+  catch (e) { $('erroEmail').textContent = erroDeLogin(e); }
+};
 
 async function definirTag(tag, antiga) {
   tag = (tag || '').trim();

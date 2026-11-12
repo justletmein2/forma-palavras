@@ -55,7 +55,7 @@ button { font-family: inherit; cursor: pointer; color: inherit; }
 .redondo.off { opacity: .45; filter: grayscale(1); }
 
 /* logo */
-.logo { margin: 34px 0 0; text-align: center; line-height: .9; display: flex; flex-direction: column; align-items: center; }
+.logo { margin: 58px 0 0; text-align: center; line-height: .9; display: flex; flex-direction: column; align-items: center; }
 .logo span { display: block; font-weight: 800; color: #fff; text-shadow: 0 5px 0 var(--roxo-esc), 0 10px 18px rgba(0,0,0,.18); }
 .l1 { font-size: 64px; letter-spacing: 4px; color: var(--amarelo) !important; transform: rotate(-4deg); animation: balanca 3s ease-in-out infinite; }
 .l2 { font-size: 46px; letter-spacing: 2px; }
@@ -218,7 +218,7 @@ input:focus { border-color: var(--roxo); }
 .toast.show { transform: translate(-50%, 0); opacity: 1; }
 
 @media (max-height: 700px) {
-  .logo { margin-top: 10px; } .l1 { font-size: 52px; } .l2 { font-size: 38px; }
+  .logo { margin-top: 52px; } .l1 { font-size: 52px; } .l2 { font-size: 38px; }
   .bolha-wrap { height: 44px; } .bolha { font-size: 26px; line-height: 42px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
@@ -358,3 +358,12 @@ html[data-tema="escuro"] { --papel: #262046; --tinta: #f1ecff; --escuro-txt: #2b
 .maior-txt { margin: 0; font-size: 18px; font-weight: 700; }
 .recap-ctl { flex-wrap: wrap; }
 .botao.ligado { box-shadow: 0 0 0 3px #fff, 0 5px 0 rgba(0,0,0,.22); }
+
+/* login por e-mail */
+.form-email { display: flex; flex-direction: column; gap: 8px; border-top: 2px dashed #e3dcff; padding-top: 10px; }
+.form-email input { font-size: 17px; padding: 8px 12px; }
+.linha-botoes { display: flex; gap: 8px; flex-wrap: wrap; }
+.linha-botoes .botao { flex: 1; font-size: 16px; padding: 10px 8px; }
+.msg-email { margin: 0; }
+.msg-email:empty { display: none; }
+[data-tema="escuro"] .form-email { border-color: #3b3266; }
