@@ -536,10 +536,36 @@ function dadosDaRodada() {
   return js.sort((a, b) => a.id.localeCompare(b.id));
 }
 
+// A maior palavra que dava pra formar (empate: a mais conhecida)
+function maiorPossivel() {
+  if (!dictReady() || !S.grid) return null;
+  const ws = [...resolver(S.grid, S.family)];
+  ws.sort((a, b) => b.length - a.length || raridade(a) - raridade(b));
+  return ws[0] || null;
+}
+
+// Gritinhos da recapitulação: iguais em todos os celulares (escolha pela própria palavra)
+const GRITOS = {
+  5: ['Boa!', 'Uau!', 'Olha só!', 'Show!'],
+  6: ['Eita!', 'Caramba!', 'Opa, opa!', 'Mandou bem!'],
+  7: ['Incrível!', 'Que isso?!', 'Arrasou!', 'Brabo!'],
+  8: ['Monstro!', 'Absurdo!', 'Genial!', 'Socorro!'],
+  9: ['LENDÁRIO!', 'Inacreditável!', 'Ninguém segura!', 'Dicionário ambulante!'],
+};
+function grito(w) {
+  if (w.length < 5) return '';
+  const lista = GRITOS[Math.min(w.length, 9)];
+  let h = 0; for (const c of w) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return lista[h % lista.length];
+}
+
+// tamanho da letra para a palavra caber numa linha só
+const tamPalavra = w => `style="font-size:min(54px, ${(112 / Math.max(w.length, 5)).toFixed(1)}vw)"`;
+
 function comecarRecap() {
   const js = dadosDaRodada();
   S.recapJog = Object.fromEntries(js.map(j => [j.id, j]));
-  S.recap = montarRecap(js);
+  S.recap = montarRecap(js, maiorPossivel());
   S.passoAtual = -1;
   S.fase = 'recap';
   // XP e desbloqueios
@@ -549,20 +575,30 @@ function comecarRecap() {
   mostrar('telaRecap');
 }
 
+// Controle da recapitulação (só o anfitrião mexe; todo mundo segue o mesmo relógio):
+// tempo = base + (agora − ancora) × vel, ou "base" parado se pausado
 const ctlRecap = () => (S.modo === 'online' ? (S.meta && S.meta.recap) || {} : S.ctlSolo);
-function tempoRecap(t) {
-  const c = ctlRecap();
-  return (c.pausa || t) - S.recapIni - (c.desloc || 0);
+function tempoRecap(t, c = ctlRecap()) {
+  if (c.ancora == null) return t - S.recapIni;
+  return c.pausado ? c.base : c.base + (t - c.ancora) * (c.vel || 1);
+}
+function mudarCtl(fn) {
+  const t = agora(), c = ctlRecap();
+  const atual = { base: tempoRecap(t, c), ancora: t, vel: c.vel || 1, pausado: !!c.pausado };
+  fn(atual);
+  if (S.modo === 'online') net.atualizarMeta(S.code, { recap: atual }); else S.ctlSolo = atual;
 }
 
 function rodarRecap(t) {
-  const ms = tempoRecap(t);
   const c = ctlRecap();
-  const host = souHost();
-  $('btnPausa').textContent = c.pausa ? '▶ Continuar' : '⏸ Pausar';
+  const ms = tempoRecap(t, c);
+  const host = souHost(), vel = c.vel || 1;
+  $('btnPausa').textContent = c.pausado ? '▶ Continuar' : '⏸ Pausar';
+  $('btnRapido').textContent = vel === 1 ? '⏩ Acelerar' : `⏩ ${vel}x`;
+  $('btnRapido').classList.toggle('ligado', vel > 1);
   $('recapCtl').hidden = !host;
   $('btnPular').hidden = ms >= S.recap.inicioRanking;
-  $('recapAviso').textContent = c.pausa && !host ? '⏸ Pausado pelo anfitrião' : '';
+  $('recapAviso').textContent = c.pausado && !host ? '⏸ Pausado pelo anfitrião' : (!host && vel > 1 ? `⏩ Passando em ${vel}x` : '');
   if (ms >= S.recap.total) { irProFim(); return; }
   const i = passoEm(S.recap, ms);
   if (i !== S.passoAtual) { S.passoAtual = i; desenharPasso(S.recap.passos[i]); }
@@ -585,10 +621,23 @@ function desenharPasso(p) {
     const nomes = p.quem.map(id => cartaoJogador(id, p.quem.length > 3 ? 44 : 56)).join('');
     html = `<div class="rc ${p.excl ? 'exclusiva' : ''}">
       ${p.excl ? '<span class="selo">⭐ EXCLUSIVA · VALE DOBRADO</span>' : ''}
-      <div class="palavra-grande">${esc(exibir(p.w).toUpperCase())}</div>
+      <div class="palavra-grande" ${tamPalavra(p.w)}>${esc(exibir(p.w).toUpperCase())}</div>
       <span class="valor">+${p.pts}${p.excl ? ` <small>(${p.base}×2)</small>` : ''}</span>
-      <div class="quem">${nomes}</div></div>`;
+      <div class="quem">${nomes}</div>
+      ${grito(p.w) ? `<span class="grito g${Math.min(p.w.length, 9)}">${grito(p.w)}</span>` : ''}</div>`;
     som.sfx(p.excl ? 'brilho' : 'reveal', p.w.length - 3);
+    if (p.w.length >= 7) setTimeout(() => som.sfx('big'), 180);
+  } else if (p.t === 'maior') {
+    html = `<div class="rc maior">
+      <span class="selo">🔍 CURIOSIDADE</span>
+      <p class="maior-txt">A maior palavra que dava pra formar era</p>
+      <div class="palavra-grande" ${tamPalavra(p.w)}>${esc(exibir(p.w).toUpperCase())}</div>
+      <span class="valor">${p.w.length} letras</span>
+      ${p.quem.length
+        ? `<p class="maior-txt">🎉 E foi achada por:</p><div class="quem">${p.quem.map(id => cartaoJogador(id, 56)).join('')}</div>`
+        : `<p class="maior-txt">😱 Ninguém achou!</p>`}</div>`;
+    som.sfx(p.som || 'brilho');
+    if (p.quem.length) confete(50);
   } else if (p.t === 'rank') {
     html = `<div class="rc">
       <div class="lugar">${p.pos}º lugar</div>
@@ -613,17 +662,10 @@ function desenharPasso(p) {
   palco.innerHTML = html;
 }
 
-$('btnPausa').onclick = () => {
-  const t = agora(), c = { ...ctlRecap() };
-  if (c.pausa) { c.desloc = (c.desloc || 0) + (t - c.pausa); c.pausa = null; } else c.pausa = t;
-  if (S.modo === 'online') net.atualizarMeta(S.code, { recap: c }); else S.ctlSolo = c;
-};
-$('btnPular').onclick = () => {
-  // pula direto pro ranking (e tira a pausa)
-  const t = agora();
-  const c = { pausa: null, desloc: (t - S.recapIni) - S.recap.inicioRanking };
-  if (S.modo === 'online') net.atualizarMeta(S.code, { recap: c }); else S.ctlSolo = c;
-};
+$('btnPausa').onclick = () => mudarCtl(c => { c.pausado = !c.pausado; });
+$('btnRapido').onclick = () => mudarCtl(c => { c.vel = c.vel >= 3 ? 1 : c.vel + 1; c.pausado = false; });
+// pula direto pro fim (curiosidade + ranking), sem pausa
+$('btnPular').onclick = () => mudarCtl(c => { c.base = Math.max(c.base, S.recap.inicioRanking); c.pausado = false; });
 
 function irProFim() {
   S.fase = 'fim';

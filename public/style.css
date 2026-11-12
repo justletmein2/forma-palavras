@@ -265,7 +265,7 @@ input:focus { border-color: var(--roxo); }
 .recap-palco { flex: 1; display: grid; place-items: center; min-height: 360px; }
 .rc { background: var(--papel); border-radius: 28px; box-shadow: 0 8px 0 rgba(43,29,92,.25); padding: 22px 18px; width: 100%; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; animation: rcEntra .45s cubic-bezier(.3,1.5,.6,1); }
 @keyframes rcEntra { from { transform: scale(.6) rotate(-4deg); opacity: 0; } }
-.rc .palavra-grande { font-size: clamp(34px, 11vw, 54px); font-weight: 800; letter-spacing: 2px; line-height: 1; word-break: break-all; color: var(--tinta); }
+.rc .palavra-grande { font-size: clamp(34px, 11vw, 54px); font-weight: 800; letter-spacing: 1px; line-height: 1; white-space: nowrap; color: var(--tinta); }
 .rc .valor { font-size: 22px; font-weight: 800; color: #fff; background: var(--verde); border-radius: 20px; padding: 0 16px; }
 .rc .quem { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
 .rc .quem > div { display: flex; flex-direction: column; align-items: center; font-weight: 800; font-size: 15px; max-width: 90px; }
@@ -337,3 +337,24 @@ html[data-tema="escuro"] { --papel: #262046; --tinta: #f1ecff; --escuro-txt: #2b
 [data-tema="escuro"] .achadas-wrap { background: rgba(255, 255, 255, .08); }
 [data-tema="escuro"] .tabuleiro { background: #0f0b22; }
 [data-tema="escuro"] .aba.on { background: var(--amarelo); }
+
+/* gritinhos e curiosidade da recapitulação */
+.rc { position: relative; }
+.grito {
+  position: absolute; top: -40px; right: -6px; transform: rotate(8deg);
+  background: var(--rosa); color: #fff; font-weight: 800; font-size: 22px; line-height: 1;
+  padding: 8px 14px; border-radius: 16px; box-shadow: 0 4px 0 rgba(0,0,0,.2);
+  animation: grito .6s cubic-bezier(.3,1.8,.5,1) .15s backwards; white-space: nowrap; max-width: 92%;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.grito.g6 { background: var(--laranja); font-size: 24px; }
+.grito.g7 { background: var(--verde); font-size: 26px; }
+.grito.g8 { background: var(--azul); font-size: 28px; transform: rotate(-6deg); }
+.grito.g9 { background: linear-gradient(90deg, var(--rosa), var(--laranja), var(--amarelo)); color: var(--escuro-txt, #2b1d5c); font-size: 28px; transform: rotate(-6deg); }
+@keyframes grito { from { transform: scale(0) rotate(-30deg); opacity: 0; } }
+.rc.maior { background: linear-gradient(160deg, #e6f7ff, #c9ecff); box-shadow: 0 8px 0 #7cc4ec; color: var(--escuro-txt, #2b1d5c); }
+.rc.maior .palavra-grande { color: var(--escuro-txt, #2b1d5c); }
+.rc.maior .valor { background: var(--azul); }
+.maior-txt { margin: 0; font-size: 18px; font-weight: 700; }
+.recap-ctl { flex-wrap: wrap; }
+.botao.ligado { box-shadow: 0 0 0 3px #fff, 0 5px 0 rgba(0,0,0,.22); }

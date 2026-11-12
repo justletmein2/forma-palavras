@@ -4,7 +4,8 @@
 import { pontos } from './dict.js';
 
 // jogadores: [{id, name, look, palavras: [plain...]}]
-export function montarRecap(jogadores) {
+// maior: a maior palavra possível no quadro (sem acento), para a curiosidade do final
+export function montarRecap(jogadores, maior = null) {
   const varios = jogadores.length > 1;
   const quem = new Map();
   for (const j of jogadores) for (const w of j.palavras) {
@@ -43,6 +44,7 @@ export function montarRecap(jogadores) {
   }
 
   const inicioRanking = passos.reduce((s, p) => s + p.dur, 0);
+  if (maior) add({ t: 'maior', w: maior, quem: quem.get(maior) || [], dur: 5200, som: 'brilho', secao: 'Curiosidade' });
   const rank = jogadores.map(j => ({ id: j.id, score: final[j.id] })).sort((a, b) => a.score - b.score);
   const topo = rank.length ? rank[rank.length - 1].score : 0;
   const vencedores = rank.filter(r => r.score === topo);
