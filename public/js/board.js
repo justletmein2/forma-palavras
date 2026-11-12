@@ -21,14 +21,14 @@ export function criarTabuleiro(el, { onChange, onSubmit, onTile }) {
   }
   el.appendChild(svg);
 
-  let grid = '', path = [], ativo = false, travado = true;
+  let grid = '', path = [], ativo = false, travado = true, ocultas = new Set();
 
   function desenhar() {
     tiles.forEach((t, i) => t.classList.toggle('on', path.includes(i)));
     tiles.forEach(t => t.classList.remove('ultimo'));
     if (path.length) tiles[path[path.length - 1]].classList.add('ultimo');
     linha.setAttribute('points', path.map(i => `${(i % N) * 100 + 50},${Math.floor(i / N) * 100 + 50}`).join(' '));
-    onChange(path.map(i => grid[i]).join(''));
+    onChange(path.map(i => ocultas.has(i) ? '?' : grid[i]).join(''));
   }
 
   function tileEm(x, y) {
@@ -86,6 +86,9 @@ export function criarTabuleiro(el, { onChange, onSubmit, onTile }) {
   return {
     setGrid(g) { grid = g; tiles.forEach((t, i) => { t.firstChild.textContent = g[i] || ''; }); },
     segurando() { return ativo; },
+    tileEl(i) { return tiles[i]; },
+    ocultar(set) { ocultas = new Set(set); },
+    cancelar() { if (ativo) { ativo = false; path = []; desenhar(); } },
     dica(idx) {
       tiles.forEach(t => t.classList.remove('dica', 'dica1'));
       idx.forEach((i, k) => tiles[i].classList.add('dica', ...(k === 0 ? ['dica1'] : [])));

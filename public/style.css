@@ -373,3 +373,112 @@ html[data-tema="escuro"] { --papel: #262046; --tinta: #f1ecff; --escuro-txt: #2b
 .tile.dica1 { box-shadow: 0 0 0 5px var(--amarelo), 0 0 26px 8px rgba(255,225,77,.9); }
 @keyframes dicaPulsa { 50% { transform: scale(1.1); } }
 .bolha.dica { background: var(--amarelo); color: #2b1d5c; font-size: 24px; letter-spacing: 1px; animation: pop .45s; }
+
+/* =========== ATRAPALHAR =========== */
+.tabuleiro { --fundo-quadro: var(--roxo-esc); }
+[data-tema="escuro"] .tabuleiro { --fundo-quadro: #0f0b22; }
+.fx { position: absolute; inset: 0; z-index: 4; border-radius: 26px; }
+.bolha.atacado { background: #2b1d5c; color: #fff; font-size: 21px; letter-spacing: 0; animation: treme .4s; }
+
+/* 1) gelo */
+.fx-gelo {
+  --forca: 1;
+  background:
+    radial-gradient(circle at 20% 15%, rgba(255,255,255,.75) 0 6%, transparent 7%),
+    radial-gradient(circle at 78% 30%, rgba(255,255,255,.55) 0 4%, transparent 5%),
+    radial-gradient(circle at 40% 80%, rgba(255,255,255,.5) 0 5%, transparent 6%),
+    linear-gradient(135deg, rgba(210,240,255,.78), rgba(130,195,255,.55) 50%, rgba(190,230,255,.72));
+  box-shadow: inset 0 0 0 5px rgba(255,255,255,.9), inset 0 0 40px rgba(255,255,255,.8);
+  backdrop-filter: blur(2px) saturate(.6); -webkit-backdrop-filter: blur(2px) saturate(.6);
+  opacity: calc(.55 + var(--forca) * .45);
+  display: grid; place-items: center; touch-action: none; cursor: pointer;
+  animation: geloEntra .35s ease-out;
+}
+@keyframes geloEntra { from { opacity: 0; transform: scale(1.06); } }
+.fx-gelo::before { /* pingentes */
+  content: ''; position: absolute; left: 6%; right: 6%; top: -2px; height: 22px;
+  background: repeating-linear-gradient(90deg, transparent 0 9px, rgba(235,248,255,.95) 9px 15px);
+  clip-path: polygon(0 0, 100% 0, 97% 40%, 92% 0, 86% 70%, 80% 0, 73% 45%, 66% 0, 58% 85%, 50% 0, 43% 50%, 36% 0, 28% 75%, 21% 0, 14% 45%, 8% 0, 3% 60%);
+}
+.fx-gelo .rachas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.fx-gelo .rachas polyline { fill: none; stroke: #fff; stroke-width: 2.4; vector-effect: non-scaling-stroke; stroke-linecap: round; filter: drop-shadow(0 0 2px rgba(60,140,220,.9)); }
+.fx-gelo.treme { animation: treme .18s; }
+.fx-aviso {
+  position: relative; background: rgba(20, 70, 140, .85); color: #fff; font-weight: 800; font-size: 19px;
+  padding: 8px 16px; border-radius: 18px; pointer-events: none; text-align: center; box-shadow: 0 4px 0 rgba(0,0,0,.2);
+}
+.fx-aviso b { display: block; font-size: 40px; line-height: 1; }
+.fx-gelo.quebrando { background: transparent; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
+.fx-gelo.quebrando .fx-aviso, .fx-gelo.quebrando .rachas, .fx-gelo.quebrando::before { display: none; }
+.caco { position: absolute; width: 18%; height: 14%; background: linear-gradient(135deg, rgba(225,245,255,.95), rgba(140,200,255,.8));
+  clip-path: polygon(50% 0, 100% 35%, 80% 100%, 10% 80%, 0 25%); animation: caco .7s ease-in forwards; }
+@keyframes caco { to { transform: translate(var(--dx), var(--dy)) rotate(var(--r)) scale(.4); opacity: 0; } }
+
+/* 2) gosma */
+.fx-gosma { width: 100%; height: 100%; touch-action: none; animation: gosmaEntra .5s cubic-bezier(.3,1.4,.6,1); filter: drop-shadow(0 4px 0 rgba(30,90,20,.5)); }
+@keyframes gosmaEntra { from { transform: translateY(-30%) scaleY(.4); opacity: 0; } }
+.fx-gosma.sumindo { transition: opacity .4s; opacity: 0; }
+.fx-aviso-solto {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 5; pointer-events: none;
+  background: rgba(20, 70, 10, .85); color: #fff; font-weight: 800; font-size: 19px; padding: 8px 16px; border-radius: 18px;
+  white-space: nowrap; transition: opacity .3s; inset: auto;
+}
+.fx-aviso-solto.some { opacity: 0; }
+
+/* 3) Carmela */
+.fx-dog { position: absolute; z-index: 5; pointer-events: none; animation: dog 1.35s ease-in-out forwards; }
+.fx-dog .boneco { width: 100%; height: 100%; filter: drop-shadow(0 4px 2px rgba(0,0,0,.3)); }
+.fx-dog .nhac { position: absolute; top: -6%; right: -12%; background: #fff; color: #c0612a; font-weight: 800; font-size: 14px;
+  padding: 0 7px; border-radius: 10px; transform: rotate(12deg); opacity: 0; animation: nhac 1.35s forwards; }
+@keyframes dog {
+  0% { transform: scale(0) rotate(-25deg); }
+  16% { transform: scale(1.12) rotate(6deg); }
+  26%, 46%, 66% { transform: scale(1, .9) translateY(6%) rotate(-4deg); }
+  36%, 56%, 76% { transform: scale(1.04, 1) translateY(0) rotate(4deg); }
+  84% { transform: scale(1); opacity: 1; }
+  100% { transform: translate(calc(var(--vira) * 70%), -70%) scale(.5) rotate(calc(var(--vira) * 30deg)); opacity: 0; }
+}
+@keyframes nhac { 30%, 75% { opacity: 1; } 100% { opacity: 0; } }
+.tile.mastigada { background: color-mix(in srgb, var(--cor) 55%, #b98a5e); }
+.tile.mastigada span { filter: blur(4.5px); transform: scale(1.45, .45) rotate(var(--rot, 20deg)); opacity: .75; transition: filter .3s, transform .3s; }
+.tile.mastigada::before, .tile.mastigada::after { content: ''; position: absolute; border-radius: 50%; background: var(--fundo-quadro); pointer-events: none; }
+.tile.mastigada::before { width: 44%; height: 44%; top: -16%; right: -14%; }
+.tile.mastigada::after { width: 30%; height: 30%; bottom: -12%; left: 14%; box-shadow: 18px 2px 0 -3px var(--fundo-quadro); }
+.tile.regenera { animation: regenera .8s ease-out; }
+@keyframes regenera { 0% { box-shadow: 0 0 0 0 #fff; transform: scale(.85); } 50% { box-shadow: 0 0 0 8px rgba(255,255,255,.6), 0 0 26px #fff; transform: scale(1.12); } }
+
+/* 4) Drácula */
+.fx-morcegos { pointer-events: none; overflow: visible; z-index: 5; animation: entra .4s; transition: opacity .6s; }
+.fx-morcegos.indo { opacity: 0; }
+.morcego { position: absolute; left: 0; top: 0; will-change: transform; }
+.morcego svg { width: 100%; height: 100%; fill: #2a1840; overflow: visible; filter: drop-shadow(0 2px 2px rgba(0,0,0,.35)); }
+.morcego .asa { transform-origin: 32px 16px; animation: bate var(--bate, .15s) ease-in-out infinite alternate; }
+@keyframes bate { to { transform: scaleY(.25); } }
+
+/* escolha do poder (folha na parte de baixo) */
+.poder-sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 25;
+  padding: 10px max(16px, env(safe-area-inset-right, 0px)) max(14px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  background: var(--papel); border-radius: 26px 26px 0 0; box-shadow: 0 -8px 30px rgba(43, 29, 92, .35);
+  display: flex; flex-direction: column; gap: 8px; max-width: 520px; margin: 0 auto;
+  animation: sobeFolha .35s cubic-bezier(.3,1.4,.6,1);
+}
+@keyframes sobeFolha { from { transform: translateY(100%); } }
+.poder-topo { display: flex; gap: 10px; align-items: center; }
+.poder-icone { font-size: 34px; line-height: 1; animation: pulsa .7s ease-in-out infinite; }
+.poder-info { min-width: 0; display: flex; flex-direction: column; line-height: 1.2; }
+.poder-info b { font-size: 17px; }
+#poderNome { color: var(--rosa); }
+.poder-info small { color: #8b7fb8; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.poder-alvos { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.poder-alvos::-webkit-scrollbar { display: none; }
+.alvo { flex: none; border: 3px solid transparent; background: #f3efff; border-radius: 16px; padding: 4px 12px 4px 4px; display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 16px; text-align: left; line-height: 1.1; }
+.alvo:active { border-color: var(--rosa); transform: scale(.96); }
+.alvo small { display: block; font-weight: 600; color: #8b7fb8; font-size: 11px; }
+.alvo span { max-width: 96px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.poder-tempo { height: 8px; background: #e3dcff; border-radius: 8px; overflow: hidden; }
+.poder-tempo div { height: 100%; background: linear-gradient(90deg, var(--rosa), var(--laranja)); transform-origin: left; }
+[data-tema="escuro"] .alvo { background: #332a5e; }
+[data-tema="escuro"] .poder-info small, [data-tema="escuro"] .alvo small { color: #a99fcf; }
+[data-tema="escuro"] .poder-rotulo { color: #b3a6ff; }
+[data-tema="escuro"] .poder-tempo { background: #3b3266; }

@@ -107,6 +107,18 @@ export function startMusic(bpm = 112) {
 export function setTempo(bpm) { tempo = bpm; }
 export function stopMusic() { clearInterval(timer); timer = null; }
 
+function ruido(t, dur, freq, vol, tipo = 'bandpass') {
+  if (!noiseBuf) {
+    noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 0.05, ctx.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+  const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+  s.buffer = noiseBuf; s.loop = true; f.type = tipo; f.frequency.value = freq;
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  s.connect(f); f.connect(g); g.connect(sfxBus); s.start(t); s.stop(t + dur + 0.02);
+}
+
 // ---------- efeitos ----------
 export function sfx(kind, n = 0) {
   if (!ctx || !sfxOn) return;
@@ -135,6 +147,17 @@ export function sfx(kind, n = 0) {
       [60, 64, 67, 72].forEach(m => note(sfxBus, m, t + 1.55, 1.2, { type: 'sine', vol: 0.1 }));
       break;
     }
+    case 'gelo': ruido(t, 0.07, 2600 + n * 250, 0.4, 'highpass'); note(sfxBus, 96 - n, t, 0.06, { type: 'sine', vol: 0.12 }); break;
+    case 'quebra': ruido(t, 0.35, 4500, 0.45, 'highpass');
+      for (let i = 0; i < 9; i++) note(sfxBus, 86 + Math.random() * 12, t + i * 0.03, 0.25, { type: 'triangle', vol: 0.1 }); break;
+    case 'gosma': note(sfxBus, 38, t, 0.4, { type: 'sine', vol: 0.4, glide: 14 }); ruido(t, 0.3, 500, 0.25, 'lowpass'); break;
+    case 'nhac': note(sfxBus, 45, t, 0.07, { type: 'square', vol: 0.18, cutoff: 600 }); ruido(t, 0.07, 1400, 0.35, 'bandpass');
+      note(sfxBus, 43, t + 0.12, 0.06, { type: 'square', vol: 0.15, cutoff: 600 }); break;
+    case 'latido': [0, 0.2].forEach(d => note(sfxBus, 64, t + d, 0.13, { type: 'sawtooth', vol: 0.16, cutoff: 1600, glide: -6 })); break;
+    case 'morcegos': for (let i = 0; i < 22; i++) ruido(t + i * 0.045, 0.03, 2200 + Math.random() * 1200, 0.18, 'bandpass');
+      [0.25, 0.7, 1.1].forEach(d => note(sfxBus, 100, t + d, 0.09, { type: 'sine', vol: 0.07, glide: 5 })); break;
+    case 'poder': [72, 68, 65, 60].forEach((m, i) => note(sfxBus, m, t + i * 0.11, 0.2, { type: 'square', vol: 0.1, cutoff: 2000 }));
+      note(sfxBus, 48, t + 0.44, 0.4, { type: 'sawtooth', vol: 0.1, cutoff: 900 }); break;
     case 'join':note(sfxBus, 76, t, 0.1, { type: 'sine', vol: 0.2 }); note(sfxBus, 83, t + 0.08, 0.14, { type: 'sine', vol: 0.2 }); break;
   }
 }

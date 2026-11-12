@@ -82,6 +82,7 @@
       <li>Pontos: 3 letras = 1 · 4 = 2 · 5 = 3 · 6 = 5 · 7 = 7 · 8 = 10 · e mais ainda acima disso!</li>
       <li>Enquanto o dedo estiver na tela é uma palavra só. Soltou, o jogo confere.</li>
       <li>Voltou o dedo pra letra anterior? A última letra é desfeita.</li>
+      <li>Modo Atrapalhar: depois de 1 minuto, a cada 30 segundos quem estiver em último escolhe alguém pra atrapalhar.</li>
       <li>Travou? Depois de uns segundos sem tentar nada aparece uma dica da menor palavra que falta.</li>
       <li>Palavra que só <b>você</b> achou vale o <b>dobro</b>!</li>
     </ul>
@@ -123,6 +124,11 @@
       <input type="checkbox" id="chkFamilia">
       <span class="trilho"></span>
       <span>Modo família <small>(palavrões não valem)</small></span>
+    </label>
+    <label class="chave">
+      <input type="checkbox" id="chkAtrapalhar">
+      <span class="trilho"></span>
+      <span>Atrapalhar 😈 <small>(a partir de 1 minuto, quem estiver em último ganha poderes pra atrapalhar os outros)</small></span>
     </label>
   </div>
   <button id="btnComecar" class="botao rosa enorme">🚀 Começar!</button>
@@ -180,6 +186,17 @@
 </section>
 
 <div id="carregando" class="carregando" hidden><div class="pulo">📚</div><p>Carregando o dicionário…</p></div>
+<div id="poderSheet" class="poder-sheet" hidden role="dialog" aria-label="Escolha quem atrapalhar">
+  <div class="poder-topo">
+    <span id="poderIcone" class="poder-icone">🧊</span>
+    <div class="poder-info">
+      <b>😈 Você tá em último! Use <span id="poderNome"></span> em:</b>
+      <small id="poderDesc"></small>
+    </div>
+  </div>
+  <div id="poderAlvos" class="poder-alvos"></div>
+  <div class="poder-tempo"><div id="poderBarra"></div></div>
+</div>
 <div id="toast" class="toast"></div>
 <div id="confete" class="confete" aria-hidden="true"></div>
 

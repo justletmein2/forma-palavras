@@ -4,6 +4,7 @@ import { avatarSVG, CATALOGO, PARTES, partesDe, normalizar, CONQUISTAS, lookPadr
 import { montarRecap, passoEm } from './recap.js';
 import * as som from './audio.js';
 import * as net from './net.js';
+import { criarEfeitos, PODERES, TIPOS } from './efeitos.js';
 
 const $ = id => document.getElementById(id);
 const DURACAO = Number(new URLSearchParams(location.search).get('tempo')) || 180;
@@ -353,6 +354,7 @@ async function entrarNaSala(code) {
 }
 
 function voltarAoInicio() {
+  fx.limpar(); fecharEscolha();
   if (S.sairSala) S.sairSala();
   Object.assign(S, { sairSala: null, modo: null, code: null, meta: null, players: {}, fase: 'inicio', round: -1, recap: null });
   tab.travar(true); som.setTempo(112);
@@ -398,7 +400,7 @@ function aoMudarSala(estado) {
   }
   if (m.status === 'lobby' && S.fase !== 'sala') { S.fase = 'sala'; mostrar('telaSala'); }
   if (S.fase === 'sala') desenharSala();
-  if (S.fase === 'jogando' || S.fase === 'contagem') desenharPlacarVivo();
+  if (S.fase === 'jogando' || S.fase === 'contagem') { desenharPlacarVivo(); verPoder(); verAtaques(); }
   if (S.fase === 'fim') desenharFim();
 }
 
@@ -418,9 +420,12 @@ function desenharSala() {
   $('chkFamilia').disabled = !host;
   $('btnComecar').hidden = !host;
   $('esperando').hidden = host;
-  $('opcoesHost').hidden = !host && !S.meta.family;
+  $('chkAtrapalhar').checked = !!S.meta.atrapalhar;
+  $('chkAtrapalhar').disabled = !host;
+  $('opcoesHost').hidden = !host && !S.meta.family && !S.meta.atrapalhar;
 }
 $('chkFamilia').onchange = () => { if (souHost()) net.atualizarMeta(S.code, { family: $('chkFamilia').checked }); };
+$('chkAtrapalhar').onchange = () => { if (souHost()) net.atualizarMeta(S.code, { atrapalhar: $('chkAtrapalhar').checked }); };
 
 $('btnCompartilhar').onclick = async () => {
   const url = location.origin + location.pathname + '?sala=' + S.code;
@@ -441,6 +446,7 @@ async function comecarOnline() {
   await net.atualizarMeta(S.code, {
     status: 'playing', grid: gerarGrade(Date.now()), round: (S.meta.round || 0) + 1,
     startAt: net.agora() + 4200, dur: DURACAO, family: !!S.meta.family, recap: null,
+    atrapalhar: !!S.meta.atrapalhar, poder: null,
   });
 }
 $('btnComecar').onclick = comecarOnline;
@@ -454,6 +460,86 @@ const tab = criarTabuleiro($('tabuleiro'), {
   onTile: (n, voltou) => { som.sfx('tile', n); if (n === 1 && !voltou) S.ultimaTentativa = agora(); },
   onSubmit: enviarPalavra,
 });
+
+const fx = criarEfeitos(document.querySelector('.tabuleiro-wrap'), tab);
+
+// =====================================================================
+// ATRAPALHAR: a partir de 1/3 da partida (1:00 de 3:00), a cada 1/6 (30 s),
+// quem está com menos pontos ganha um poder pra usar em alguém
+// =====================================================================
+const JANELA_ESCOLHA = 9000;
+function concederPoder(t) {
+  const dur = S.dur * 1000, el = t - S.startAt, ini = dur / 3, passo = dur / 6;
+  if (el < ini || el > dur - passo / 2) return;
+  const k = Math.floor((el - ini) / passo);
+  const p = S.meta && S.meta.poder;
+  if ((p && p.round === S.round && p.k >= k) || S.concedido === S.round + ':' + k) return;
+  const js = jogadoresDaRodada().filter(j => j.online);
+  if (js.length < 2) return;
+  S.concedido = S.round + ':' + k;
+  const menor = Math.min(...js.map(j => j.score || 0));
+  const ultimos = js.filter(j => (j.score || 0) === menor);
+  const quem = ultimos[Math.floor(Math.random() * ultimos.length)];
+  const tipo = TIPOS[Math.floor(Math.random() * TIPOS.length)];
+  net.atualizarMeta(S.code, { poder: { round: S.round, k, para: quem.id, tipo, ate: t + JANELA_ESCOLHA } }).catch(() => {});
+}
+
+// Eu ganhei um poder? Mostra a escolha de quem atrapalhar
+function verPoder() {
+  const p = S.meta && S.meta.poder;
+  if (!p || p.round !== S.round || S.fase !== 'jogando' || p.para !== net.meuId()) return;
+  const id = p.round + ':' + p.k;
+  if (S.poderVisto === id || net.agora() > p.ate) return;
+  S.poderVisto = id;
+  abrirEscolha(p);
+}
+
+function abrirEscolha(p) {
+  const P_ = PODERES[p.tipo];
+  S.escolha = p;
+  $('poderIcone').textContent = P_.icone;
+  $('poderNome').textContent = P_.nome;
+  $('poderDesc').textContent = P_.desc;
+  const alvos = jogadoresDaRodada().filter(j => j.id !== net.meuId() && j.online)
+    .sort((a, b) => (b.score || 0) - (a.score || 0));
+  $('poderAlvos').innerHTML = alvos.map(j => `<button class="alvo" data-id="${esc(j.id)}">
+    ${avatarSVG(j.look, 38)}<div><span>${esc(j.name)}</span><small>${j.count || 0} palavras</small></div></button>`).join('');
+  $('poderSheet').hidden = false;
+  som.sfx('poder');
+  if (navigator.vibrate) navigator.vibrate([30, 40, 30]);
+}
+function fecharEscolha() { S.escolha = null; $('poderSheet').hidden = true; }
+$('poderAlvos').onclick = e => {
+  const b = e.target.closest('.alvo'); const p = S.escolha;
+  if (!b || !p) return;
+  const alvo = b.dataset.id, nome = S.players[alvo]?.name || '';
+  fecharEscolha();
+  net.atualizarEu(S.code, { ataque: { round: p.round, k: p.k, para: alvo, tipo: p.tipo, em: net.agora() } }).catch(() => {});
+  toast(`${PODERES[p.tipo].icone} Você atrapalhou ${nome}! 😈`);
+};
+
+// Alguém usou um poder: se foi em mim, aplica; senão, só avisa
+function verAtaques() {
+  if (!S.ataquesVistos) S.ataquesVistos = new Set();
+  const m = S.meta && S.meta.poder;
+  for (const [id, pl] of Object.entries(S.players)) {
+    const a = pl.ataque;
+    if (!a || a.round !== S.round) continue;
+    const chave = id + ':' + a.round + ':' + a.k;
+    if (S.ataquesVistos.has(chave)) continue;
+    S.ataquesVistos.add(chave);
+    if (!m || m.para !== id || m.k !== a.k || net.agora() - a.em > 12000) continue; // só vale quem ganhou o poder
+    if (a.para === net.meuId()) receberPoder(a.tipo, pl.name);
+    else if (id !== net.meuId()) toast(`${PODERES[a.tipo].icone} ${pl.name} atrapalhou ${S.players[a.para]?.name || 'alguém'}!`);
+  }
+}
+
+function receberPoder(tipo, quem) {
+  if (S.fase !== 'jogando') return;
+  bolha(`${PODERES[tipo].icone} ${quem} te atrapalhou!`, 'atacado', 2200);
+  if (navigator.vibrate) navigator.vibrate([80, 50, 80]);
+  fx.aplicar(tipo);
+}
 
 let bolhaT;
 function limparBolha() { clearTimeout(bolhaT); const b = $('bolha'); b.className = 'bolha'; b.textContent = ''; }
@@ -473,7 +559,9 @@ async function iniciarRodada(m) {
     round: m.round, grid: m.grid, startAt: m.startAt, dur: m.dur || DURACAO, family: !!m.family,
     achadas: new Map(), score: 0, fase: 'contagem', ultimaContagem: null, recap: null, passoAtual: -1, ganhos: null,
     possiveis: null, ultimaTentativa: 0, dicaPalavra: null, dicaNivel: 0,
+    atrapalhar: !!m.atrapalhar, ataquesVistos: new Set(), poderVisto: null, concedido: null,
   });
+  fx.limpar(); fecharEscolha();
   if (S.modo === 'online') net.atualizarEu(S.code, { ...meuPublico(), round: S.round, score: 0, count: 0, words: null, online: true }).catch(() => {});
   $('meusPontos').textContent = '0';
   $('achadas').innerHTML = ''; $('qtdAchadas').textContent = '0';
@@ -574,6 +662,14 @@ function tique() {
     if (acabando && seg !== S.ultimaContagem && seg > 0) { S.ultimaContagem = seg; som.sfx('tick'); }
     if (resta <= 0) { tab.dica([]); acabouTempo(); }
     else if (!tab.segurando() && t - S.ultimaTentativa > ESPERA_DICA) darDica(t);
+    if (S.modo === 'online' && S.atrapalhar) {
+      if (souHost()) concederPoder(t);
+      if (S.escolha) {
+        const falta = S.escolha.ate - t;
+        $('poderBarra').style.transform = `scaleX(${Math.max(0, falta / JANELA_ESCOLHA)})`;
+        if (falta <= 0) { fecharEscolha(); toast('⌛ O poder passou…'); }
+      }
+    }
   }
   if (S.fase === 'espera' && t >= S.recapIni) comecarRecap();
   if (S.fase === 'recap') rodarRecap(t);
@@ -583,6 +679,7 @@ setInterval(tique, 50);
 
 function acabouTempo() {
   S.fase = 'espera';
+  fx.limpar(); fecharEscolha();
   tab.travar(true);
   som.sfx('end'); som.setTempo(100);
   liberarTela();
@@ -802,3 +899,6 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && S.
 desenharInicio();
 sincronizarPerfil();
 loadDict().catch(() => {});
+
+// modo de teste local: window.__poder('gelo') aplica um poder em mim
+if (net.modoLocal()) window.__poder = tipo => fx.aplicar(tipo);

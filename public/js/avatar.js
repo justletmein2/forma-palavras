@@ -121,7 +121,7 @@ const pega = (parte, id) => CATALOGO[parte].find(x => x.id === id) || CATALOGO[p
 
 let uid = 0;
 // Desenha o boneco. Retorna uma string <svg>.
-export function avatarSVG(look = {}, tam = 64) {
+export function avatarSVG(look = {}, tam = 64, opts = {}) {
   const L = { ...BASE, ...normalizar(look) };
   const k = 'a' + (++uid);
   const pele = pega('pele', L.pele).cor;
@@ -132,7 +132,7 @@ export function avatarSVG(look = {}, tam = 64) {
   const s = [];
   s.push(`<defs><linearGradient id="${k}arco" x1="0" x2="1"><stop offset="0" stop-color="#ff5fa2"/><stop offset=".33" stop-color="#ffd23f"/><stop offset=".66" stop-color="#2fd47a"/><stop offset="1" stop-color="#36b6ff"/></linearGradient>
     <clipPath id="${k}c"><circle cx="50" cy="50" r="50"/></clipPath></defs>`);
-  s.push(`<circle cx="50" cy="50" r="50" fill="${fundo}"/>`);
+  if (!opts.semFundo) s.push(`<circle cx="50" cy="50" r="50" fill="${fundo}"/>`);
   s.push(`<g clip-path="url(#${k}c)">`);
 
   const bicho = ehBicho(L);
