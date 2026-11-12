@@ -1,6 +1,6 @@
-# Caça-Palavras Maluco
+# Forma Palavras
 
-Caça-palavras multiplayer pelo celular: todo mundo vê o mesmo quadro 6x6 e tem 3 minutos
+Jogo de formar palavras multiplayer pelo celular: todo mundo vê o mesmo quadro 6x6 e tem 3 minutos
 pra achar o máximo de palavras. No fim, uma recapitulação palavra por palavra e o ranking
 revelado do último pro primeiro.
 

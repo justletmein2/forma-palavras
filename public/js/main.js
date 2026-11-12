@@ -362,10 +362,10 @@ $('chkFamilia').onchange = () => { if (souHost()) net.atualizarMeta(S.code, { fa
 
 $('btnCompartilhar').onclick = async () => {
   const url = location.origin + location.pathname + '?sala=' + S.code;
-  const texto = `Bora jogar Caça-Palavras Maluco! Sala ${S.code}`;
+  const texto = `Bora jogar Forma Palavras! Sala ${S.code}`;
   try {
     if (!navigator.share) throw new Error('sem share');
-    await navigator.share({ title: 'Caça-Palavras Maluco', text: texto, url });
+    await navigator.share({ title: 'Forma Palavras', text: texto, url });
   } catch (e) {
     if (e && e.name === 'AbortError') return; // a pessoa cancelou
     try { await navigator.clipboard.writeText(url); toast('Link copiado! Manda pra galera 📲'); }
