@@ -2,6 +2,10 @@
 // lvl: nível necessário. ach: conquista necessária (vitoria, longa, exclusivas, maratona).
 
 export const CATALOGO = {
+  tipo: [
+    { id: 'pessoa', nome: 'Pessoa' }, { id: 'caramelo', nome: 'Cachorrinha caramelo' }, { id: 'morcego', nome: 'Morceguinho' },
+    { id: 'sanhaco', nome: 'Sanhaço' }, { id: 'maritaca', nome: 'Maritaca' }, { id: 'sabia', nome: 'Sabiá' },
+  ],
   pele: [
     { id: 'p1', nome: 'Tom 1', cor: '#ffe0c7' }, { id: 'p2', nome: 'Tom 2', cor: '#f6c7a1' },
     { id: 'p3', nome: 'Tom 3', cor: '#e0a47a' }, { id: 'p4', nome: 'Tom 4', cor: '#c07f55' },
@@ -14,6 +18,14 @@ export const CATALOGO = {
     { id: 'espetado', nome: 'Espetado', lvl: 2 }, { id: 'chiquinha', nome: 'Maria-chiquinha', lvl: 3 },
     { id: 'coque', nome: 'Coque', lvl: 4 }, { id: 'blackpower', nome: 'Black power', lvl: 5 },
     { id: 'moicano', nome: 'Moicano', lvl: 8 },
+    { id: 'chanel', nome: 'Chanel' }, { id: 'franja', nome: 'Franjinha' }, { id: 'raspado', nome: 'Raspadinho' },
+    { id: 'topete', nome: 'Topete', lvl: 2 }, { id: 'lado', nome: 'Franja de lado', lvl: 3 },
+    { id: 'trancas', nome: 'Tranças', lvl: 5 }, { id: 'dreads', nome: 'Dreads', lvl: 6 },
+  ],
+  barba: [
+    { id: 'nada', nome: 'Sem barba' }, { id: 'bigodinho', nome: 'Bigodinho' }, { id: 'curta', nome: 'Barba por fazer' },
+    { id: 'cavanhaque', nome: 'Cavanhaque' }, { id: 'costeletas', nome: 'Costeletas', lvl: 2 },
+    { id: 'cheia', nome: 'Barba cheia', lvl: 3 }, { id: 'lenhador', nome: 'Barba de lenhador', lvl: 7 },
   ],
   corCabelo: [
     { id: 'preto', nome: 'Preto', cor: '#2a1f1a' }, { id: 'castanho', nome: 'Castanho', cor: '#6b3f22' },
@@ -61,9 +73,13 @@ export const CATALOGO = {
 };
 
 export const PARTES = [
-  ['pele', 'Pele'], ['cabelo', 'Cabelo'], ['corCabelo', 'Cor do cabelo'], ['olhos', 'Olhos'], ['boca', 'Boca'],
+  ['tipo', 'Personagem'], ['pele', 'Pele'], ['cabelo', 'Cabelo'], ['corCabelo', 'Cor do cabelo'], ['barba', 'Barba'], ['olhos', 'Olhos'], ['boca', 'Boca'],
   ['roupa', 'Roupa'], ['corRoupa', 'Cor da roupa'], ['chapeu', 'Chapéu'], ['acessorio', 'Acessório'], ['fundo', 'Fundo'],
 ];
+
+// Partes que valem para os bichinhos (o resto é só para pessoa)
+export const PARTES_BICHO = ['tipo', 'olhos', 'corRoupa', 'chapeu', 'acessorio', 'fundo'];
+export const ehBicho = look => !!look && !!look.tipo && look.tipo !== 'pessoa';
 
 export const CONQUISTAS = {
   vitoria: 'Vencer uma partida com 2+ jogadores',
@@ -75,6 +91,7 @@ export const CONQUISTAS = {
 export function lookPadrao() {
   const r = a => a.filter(x => !x.lvl && !x.ach)[Math.floor(Math.random() * a.filter(x => !x.lvl && !x.ach).length)].id;
   return {
+    tipo: 'pessoa', barba: 'nada',
     pele: r(CATALOGO.pele), cabelo: r(CATALOGO.cabelo), corCabelo: r(CATALOGO.corCabelo), olhos: 'normal', boca: 'sorriso',
     roupa: 'camiseta', corRoupa: r(CATALOGO.corRoupa), chapeu: 'nada', acessorio: 'nada', fundo: r(CATALOGO.fundo),
   };
@@ -103,8 +120,16 @@ export function avatarSVG(look = {}, tam = 64) {
   s.push(`<circle cx="50" cy="50" r="50" fill="${fundo}"/>`);
   s.push(`<g clip-path="url(#${k}c)">`);
 
+  const bicho = ehBicho(L);
+  if (bicho) s.push(desenharBicho(L.tipo, roupa));
+  else {
   // cabelo de trás
   const atras = {
+    chanel: `<path d="M25 44 Q23 66 31 70 L69 70 Q77 66 75 44 Z" fill="${cab}"/>`,
+    franja: `<path d="M24 44 Q22 80 30 92 L70 92 Q78 80 76 44 Z" fill="${cab}"/>`,
+    lado: `<path d="M25 44 Q24 64 30 68 L70 68 Q76 64 75 44 Z" fill="${cab}"/>`,
+    trancas: `<g fill="${cab}">${[52, 60, 68, 76, 84].map(y => `<circle cx="23" cy="${y}" r="5"/><circle cx="77" cy="${y}" r="5"/>`).join('')}</g>`,
+    dreads: `<g stroke="${cab}" stroke-width="6" stroke-linecap="round">${[[24, 78], [30, 84], [70, 84], [76, 78], [36, 88], [64, 88]].map(([x, y]) => `<path d="M${x} 40 L${x} ${y}"/>`).join('')}</g>`,
     longo: `<path d="M24 44 Q22 80 30 92 L70 92 Q78 80 76 44 Z" fill="${cab}"/>`,
     rabo: `<path d="M70 40 Q92 52 80 80 Q76 66 70 58 Z" fill="${cab}"/>`,
     chiquinha: `<circle cx="20" cy="50" r="9" fill="${cab}"/><circle cx="80" cy="50" r="9" fill="${cab}"/><path d="M16 56 Q12 72 18 80 Q22 70 22 58Z M84 56 Q88 72 82 80 Q78 70 78 58Z" fill="${cab}"/>`,
@@ -129,6 +154,7 @@ export function avatarSVG(look = {}, tam = 64) {
   s.push(`<rect x="44" y="64" width="12" height="12" rx="4" fill="${pele}"/>`);
   s.push(`<ellipse cx="27" cy="50" rx="5" ry="6" fill="${pele}"/><ellipse cx="73" cy="50" rx="5" ry="6" fill="${pele}"/>`);
   s.push(`<ellipse cx="50" cy="46" rx="23" ry="24" fill="${pele}"/>`);
+  }
 
   // olhos
   const olhos = {
@@ -143,8 +169,18 @@ export function avatarSVG(look = {}, tam = 64) {
   s.push(olhos);
   if (L.acessorio !== 'escuros') s.push(`<ellipse cx="35" cy="56" rx="4" ry="2.4" fill="#ff7e9e" opacity=".45"/><ellipse cx="65" cy="56" rx="4" ry="2.4" fill="#ff7e9e" opacity=".45"/>`);
 
-  // boca
-  s.push({
+  // barba (fica atrás da boca)
+  if (!bicho) s.push({
+    bigodinho: `<path d="M42 56.6 Q46 53.8 50 55.4 Q54 53.8 58 56.6" fill="none" stroke="${cab}" stroke-width="2" stroke-linecap="round"/>`,
+    curta: `<path d="M29 50 Q29 74 50 76 Q71 74 71 50 Q66 62 58 60 Q50 57 42 60 Q34 62 29 50Z" fill="${cab}" opacity=".35"/>`,
+    cavanhaque: `<path d="M44 62 Q50 60 56 62 Q57 72 50 75 Q43 72 44 62Z" fill="${cab}"/><path d="M42 56.6 Q46 53.8 50 55.4 Q54 53.8 58 56.6" fill="none" stroke="${cab}" stroke-width="2.4" stroke-linecap="round"/>`,
+    costeletas: `<path d="M26.5 42 L31.5 42 L31.5 60 Q28 60 26.5 55Z M73.5 42 L68.5 42 L68.5 60 Q72 60 73.5 55Z" fill="${cab}"/>`,
+    cheia: `<path d="M28 46 Q28 76 50 78 Q72 76 72 46 Q67 62 58 59 Q50 56 42 59 Q33 62 28 46Z" fill="${cab}"/>`,
+    lenhador: `<path d="M26 44 Q24 86 50 90 Q76 86 74 44 Q68 62 58 59 Q50 56 42 59 Q32 62 26 44Z" fill="${cab}"/>`,
+  }[L.barba] || '');
+  // boca (ou focinho/bico)
+  if (bicho) s.push(focinho(L.tipo));
+  else s.push({
     sorriso: `<path d="M43 58 Q50 64 57 58" fill="none" stroke="${esc}" stroke-width="2.4" stroke-linecap="round"/>`,
     risada: `<path d="M42 57 Q50 68 58 57 Z" fill="${esc}"/><path d="M45 61 Q50 64 55 61" fill="#ff7e9e"/>`,
     o: `<ellipse cx="50" cy="60" rx="3" ry="3.6" fill="${esc}"/>`,
@@ -155,6 +191,13 @@ export function avatarSVG(look = {}, tam = 64) {
 
   // cabelo da frente
   const frente = {
+    chanel: `<path d="M26 46 Q26 20 50 20 Q74 20 74 46 Q72 37 66 35 L34 35 Q28 37 26 46Z" fill="${cab}"/>`,
+    franja: `<path d="M26 44 Q26 19 50 19 Q74 19 74 44 L70 38 Q60 39.5 50 38.5 Q40 39.5 30 38Z" fill="${cab}"/>`,
+    raspado: `<path d="M27 42 Q28 21 50 21 Q72 21 73 42 Q62 33 50 33 Q38 33 27 42Z" fill="${cab}" opacity=".55"/>`,
+    topete: `<path d="M28 40 Q26 22 44 18 Q62 9 72 25 Q74 32 73 40 Q66 30 52 31 Q38 30 28 40Z" fill="${cab}"/>`,
+    lado: `<path d="M26 46 Q24 20 50 20 Q76 20 74 40 Q60 31 45 34 Q34 40 30 52Z" fill="${cab}"/>`,
+    trancas: `<path d="M27 44 Q28 20 50 21 Q72 20 73 44 Q66 30 50 32 Q34 30 27 44Z" fill="${cab}"/><path d="M50 21 L50 32" stroke="rgba(255,255,255,.35)" stroke-width="1.5"/>`,
+    dreads: `<path d="M27 44 Q28 20 50 21 Q72 20 73 44 Q62 31 50 33 Q38 31 27 44Z" fill="${cab}"/><g stroke="${cab}" stroke-width="5" stroke-linecap="round"><path d="M36 24 L33 38"/><path d="M50 21 L50 34"/><path d="M64 24 L67 38"/></g>`,
     curto: `<path d="M27 44 Q28 20 50 21 Q72 20 73 44 Q66 32 50 33 Q36 32 27 44Z" fill="${cab}"/>`,
     longo: `<path d="M26 48 Q26 20 50 21 Q74 20 74 48 Q70 34 58 30 Q48 38 30 38 Q28 42 26 48Z" fill="${cab}"/>`,
     cacheado: `<g fill="${cab}"><circle cx="32" cy="34" r="8"/><circle cx="42" cy="26" r="9"/><circle cx="55" cy="25" r="9"/><circle cx="66" cy="31" r="8"/><circle cx="71" cy="40" r="6"/><circle cx="29" cy="41" r="6"/></g>`,
@@ -166,7 +209,7 @@ export function avatarSVG(look = {}, tam = 64) {
     blackpower: `<path d="M27 42 Q30 30 50 30 Q70 30 73 42 Q60 35 50 36 Q40 35 27 42Z" fill="${cab}"/>`,
     moicano: `<path d="M44 34 Q42 12 50 6 Q58 12 56 34 Q50 30 44 34Z" fill="${cab}"/>`,
   }[L.cabelo] || '';
-  s.push(frente);
+  if (!bicho) s.push(frente);
 
   // acessório
   s.push({
@@ -192,11 +235,11 @@ export function avatarSVG(look = {}, tam = 64) {
     coroa: `<path d="M32 26 L34 10 L42 18 L50 6 L58 18 L66 10 L68 26 Z" fill="#ffc400" stroke="#d49a00" stroke-width="1.5"/><circle cx="50" cy="20" r="2.5" fill="#ff3d7f"/><circle cx="40" cy="22" r="1.8" fill="#36b6ff"/><circle cx="60" cy="22" r="1.8" fill="#2fd47a"/>`,
     aureola: `<ellipse cx="50" cy="12" rx="17" ry="5" fill="none" stroke="#ffd23f" stroke-width="3.5"/>`,
   }[L.chapeu] || '');
-  if (L.roupa === 'astronauta') s.push(`<circle cx="50" cy="46" r="31" fill="rgba(180,220,255,.22)" stroke="#dfe6f2" stroke-width="3"/><path d="M33 28 Q40 22 48 21" stroke="#fff" stroke-width="3" fill="none" opacity=".8" stroke-linecap="round"/>`);
+  if (!bicho && L.roupa === 'astronauta') s.push(`<circle cx="50" cy="46" r="31" fill="rgba(180,220,255,.22)" stroke="#dfe6f2" stroke-width="3"/><path d="M33 28 Q40 22 48 21" stroke="#fff" stroke-width="3" fill="none" opacity=".8" stroke-linecap="round"/>`);
   s.push('</g>');
   return `<svg class="boneco" viewBox="0 0 100 100" width="${tam}" height="${tam}" role="img" aria-label="avatar">${s.join('')}</svg>`;
 }
-const BASE = { pele: 'p2', cabelo: 'curto', corCabelo: 'castanho', olhos: 'normal', boca: 'sorriso', roupa: 'camiseta', corRoupa: 'azul', chapeu: 'nada', acessorio: 'nada', fundo: 'lilas' };
+const BASE = { tipo: 'pessoa', barba: 'nada', pele: 'p2', cabelo: 'curto', corCabelo: 'castanho', olhos: 'normal', boca: 'sorriso', roupa: 'camiseta', corRoupa: 'azul', chapeu: 'nada', acessorio: 'nada', fundo: 'lilas' };
 
 // ---------- níveis ----------
 // Nível n precisa de 50·n·(n−1) de XP: 2→100, 3→300, 4→600, 5→1000...
@@ -216,4 +259,56 @@ export function itensNovos(antes, depois) {
     if (!liberado(it, antes.nivel, antes.ach) && liberado(it, depois.nivel, depois.ach)) out.push(it.nome);
   }
   return out;
+}
+
+// ---------- bichinhos ----------
+const ESC = '#2b1d5c';
+const lenco = cor => `<path d="M33 73 L67 73 L50 91 Z" fill="${cor}"/><path d="M33 73 L67 73" stroke="rgba(0,0,0,.18)" stroke-width="2"/>`;
+const AVES = {
+  sanhaco: { cabeca: '#a9bfd0', corpo: '#9db4c6', asa: '#4f8fb8', barriga: '#c9d7e2' },
+  maritaca: { cabeca: '#5bbd4a', corpo: '#4caf50', asa: '#2e8b3e', barriga: '#93d66e', anel: '#f3efe0' },
+  sabia: { cabeca: '#8b7860', corpo: '#8b7860', asa: '#6e5c47', barriga: '#e08a3c', anel: '#f2c14e' },
+};
+
+function desenharBicho(tipo, roupa) {
+  if (tipo === 'caramelo') {
+    const c = '#d99a4e', claro = '#f6d7a7', esc = '#a8682c';
+    return `<path d="M18 100 Q20 74 50 72 Q80 74 82 100 Z" fill="${c}"/><ellipse cx="50" cy="96" rx="14" ry="14" fill="${claro}"/>
+      ${lenco(roupa)}
+      <ellipse cx="50" cy="46" rx="23" ry="22" fill="${c}"/>
+      <path d="M44 25 Q50 22 56 25 Q54 36 50 40 Q46 36 44 25Z" fill="${claro}" opacity=".7"/>
+      <ellipse cx="25" cy="48" rx="8" ry="16" transform="rotate(18 25 48)" fill="${esc}"/>
+      <ellipse cx="75" cy="48" rx="8" ry="16" transform="rotate(-18 75 48)" fill="${esc}"/>`;
+  }
+  if (tipo === 'morcego') {
+    const c = '#6b5b8e', esc = '#4a3d66', rosa = '#f2a7c3';
+    return `<path d="M50 78 L2 66 Q10 78 7 90 Q16 84 19 96 Q26 87 31 100 L50 100Z" fill="${esc}"/>
+      <path d="M50 78 L98 66 Q90 78 93 90 Q84 84 81 96 Q74 87 69 100 L50 100Z" fill="${esc}"/>
+      <ellipse cx="50" cy="96" rx="20" ry="22" fill="${c}"/>${lenco(roupa)}
+      <path d="M30 38 L23 7 L45 26Z M70 38 L77 7 L55 26Z" fill="${c}"/>
+      <path d="M31 33 L26.5 14 L40 27Z M69 33 L73.5 14 L60 27Z" fill="${rosa}"/>
+      <ellipse cx="50" cy="46" rx="22" ry="21" fill="${c}"/>
+      <ellipse cx="50" cy="52" rx="15" ry="12" fill="#8a7bab"/>`;
+  }
+  const a = AVES[tipo] || AVES.sanhaco;
+  return `<ellipse cx="22" cy="90" rx="9" ry="19" transform="rotate(14 22 90)" fill="${a.asa}"/>
+    <ellipse cx="78" cy="90" rx="9" ry="19" transform="rotate(-14 78 90)" fill="${a.asa}"/>
+    <ellipse cx="50" cy="98" rx="28" ry="27" fill="${a.corpo}"/>
+    <ellipse cx="50" cy="100" rx="18" ry="19" fill="${a.barriga}"/>
+    ${tipo === 'sabia' ? `<g stroke="#f4efe6" stroke-width="1.6" stroke-linecap="round"><path d="M45 66 L44 71"/><path d="M50 67 L50 72"/><path d="M55 66 L56 71"/></g>` : ''}
+    ${lenco(roupa)}
+    <circle cx="50" cy="46" r="23" fill="${a.cabeca}"/>
+    ${tipo === 'maritaca' ? `<g fill="#e53935"><circle cx="31" cy="60" r="2.2"/><circle cx="69" cy="60" r="2.2"/><circle cx="34" cy="64" r="1.6"/><circle cx="66" cy="64" r="1.6"/></g>` : ''}
+    ${tipo === 'sanhaco' ? `<path d="M28 40 Q50 26 72 40" fill="none" stroke="${a.asa}" stroke-width="3" opacity=".35" stroke-linecap="round"/>` : ''}
+    ${a.anel ? `<circle cx="41" cy="48" r="6.4" fill="${a.anel}"/><circle cx="59" cy="48" r="6.4" fill="${a.anel}"/>` : ''}`;
+}
+
+function focinho(tipo) {
+  if (tipo === 'caramelo') return `<ellipse cx="50" cy="58" rx="11.5" ry="8.5" fill="#f6d7a7"/><ellipse cx="50" cy="53.5" rx="4.4" ry="3.2" fill="${ESC}"/>
+    <path d="M45.5 59 Q48 62 50 59 Q52 62 54.5 59" fill="none" stroke="${ESC}" stroke-width="1.6" stroke-linecap="round"/><path d="M48.3 61 Q50 66.5 51.7 61Z" fill="#ff6f8e"/>`;
+  if (tipo === 'morcego') return `<path d="M47.5 53 Q50 55.5 52.5 53" fill="none" stroke="${ESC}" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M43 58 Q50 63.5 57 58" fill="none" stroke="${ESC}" stroke-width="2" stroke-linecap="round"/><path d="M45.6 59.6 L47.2 63.4 L48.6 60.6Z M51.4 60.6 L52.8 63.4 L54.4 59.6Z" fill="#fff"/>`;
+  if (tipo === 'maritaca') return `<path d="M43.5 53 Q50 49.5 56.5 53 Q56 61.5 50 65 Q48.5 59 43.5 53Z" fill="#efe2c4" stroke="#b9a77f" stroke-width="1"/>`;
+  if (tipo === 'sabia') return `<path d="M45 54 L55 54 L50 63.5Z" fill="#e8b730"/><path d="M45 54 L55 54" stroke="#b8860b" stroke-width="1"/>`;
+  return `<path d="M45 54 L55 54 L50 62.5Z" fill="#5d6670"/>`;
 }

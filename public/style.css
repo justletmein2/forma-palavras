@@ -114,7 +114,7 @@ input:focus { border-color: var(--roxo); }
 
 /* jogo */
 #telaJogo { gap: 10px; padding-top: max(10px, env(safe-area-inset-top)); }
-.topo-jogo { display: flex; gap: 10px; align-items: center; padding-right: 96px; }
+.topo-jogo { display: flex; gap: 10px; align-items: center; padding-right: 142px; }
 .tempo { flex: 1; height: 40px; border-radius: 20px; background: rgba(255,255,255,.35); position: relative; overflow: hidden; }
 .barra { position: absolute; inset: 0; width: 100%; background: linear-gradient(90deg, var(--verde), var(--amarelo)); border-radius: 20px; transform-origin: left; }
 .tempo.acabando .barra { background: linear-gradient(90deg, #ff4d6d, var(--laranja)); }
@@ -299,3 +299,41 @@ input:focus { border-color: var(--roxo); }
 .lista-jog .nv { font-size: 13px; color: var(--roxo); font-weight: 800; }
 .degrau .boneco { margin-bottom: 4px; }
 .chip-jog .boneco { flex: none; }
+
+/* ---------- tema escuro (botão 🌙) ---------- */
+html[data-tema="escuro"] { --papel: #262046; --tinta: #f1ecff; --escuro-txt: #2b1d5c; color-scheme: dark; background: #15112b; }
+[data-tema="escuro"] .ceu { background: linear-gradient(170deg, #1b1636 0%, #2a1f55 50%, #3f1f52 100%); }
+[data-tema="escuro"] .ceu i { opacity: .16; }
+[data-tema="escuro"] input { background: #1d1838; border-color: #3b3266; color: var(--tinta); }
+[data-tema="escuro"] input:focus { border-color: #a99bff; }
+[data-tema="escuro"] .redondo { background: rgba(46, 38, 86, .92); }
+[data-tema="escuro"] .aviso { background: #4a3d1a; color: #ffe9a8; }
+[data-tema="escuro"] .rotulo, [data-tema="escuro"] .lista-jog .nv, [data-tema="escuro"] .rc .lugar { color: #b3a6ff; }
+[data-tema="escuro"] .ou, [data-tema="escuro"] .dica, [data-tema="escuro"] .chave small,
+[data-tema="escuro"] .legenda, [data-tema="escuro"] .conta-linha, [data-tema="escuro"] .meus-pontos small { color: #a99fcf; }
+[data-tema="escuro"] .mini { background: #332a5e; color: #c9bfff; }
+[data-tema="escuro"] .botao-google { background: #1d1838; border-color: #3b3266; color: var(--tinta); }
+[data-tema="escuro"] .lista-jog li, [data-tema="escuro"] .item, [data-tema="escuro"] .ranking details,
+[data-tema="escuro"] .soltas .palavra, [data-tema="escuro"] .palavra { background: #332a5e; }
+[data-tema="escuro"] .item.on { background: #43397a; }
+[data-tema="escuro"] .aba { background: rgba(255, 255, 255, .12); color: var(--tinta); }
+[data-tema="escuro"] .aba.on, [data-tema="escuro"] .botao.amarelo, [data-tema="escuro"] .chip-jog.eu,
+[data-tema="escuro"] .palavra.exclusiva, [data-tema="escuro"] .desbloqueio, [data-tema="escuro"] .lista-jog .tag { color: var(--escuro-txt); }
+[data-tema="escuro"] .palavra.exclusiva { background: var(--amarelo); }
+[data-tema="escuro"] .chip-jog { background: rgba(46, 38, 86, .92); }
+[data-tema="escuro"] .chip-jog.eu { background: var(--amarelo); }
+[data-tema="escuro"] .chip-jog b { color: #c9bfff; }
+[data-tema="escuro"] .chip-jog.eu b { color: var(--roxo); }
+[data-tema="escuro"] .bolha { background: #2e2656; }
+[data-tema="escuro"] #txtTempo { color: var(--escuro-txt); }
+[data-tema="escuro"] .trilho { background: #4a4080; }
+[data-tema="escuro"] .xp { background: #3b3266; }
+[data-tema="escuro"] .toast { background: #0d0a1c; color: #fff; }
+[data-tema="escuro"] .selo { background: #120e26; }
+[data-tema="escuro"] .rc.exclusiva, [data-tema="escuro"] .rc.campeao,
+[data-tema="escuro"] .rc.exclusiva .palavra-grande, [data-tema="escuro"] .rc.campeao .nome-grande { color: var(--escuro-txt); }
+[data-tema="escuro"] .rc.campeao .lugar { color: #8a5d00; }
+[data-tema="escuro"] .regras { background: rgba(255, 255, 255, .08); }
+[data-tema="escuro"] .achadas-wrap { background: rgba(255, 255, 255, .08); }
+[data-tema="escuro"] .tabuleiro { background: #0f0b22; }
+[data-tema="escuro"] .aba.on { background: var(--amarelo); }

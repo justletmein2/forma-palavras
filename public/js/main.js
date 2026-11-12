@@ -1,6 +1,6 @@
 import { loadDict, dictReady, lookup, pontos, gerarGrade, resolver, exibir, raridade, semAcento } from './dict.js';
 import { criarTabuleiro } from './board.js';
-import { avatarSVG, CATALOGO, PARTES, CONQUISTAS, lookPadrao, liberado, nivelDe, faixaNivel, itensNovos } from './avatar.js';
+import { avatarSVG, CATALOGO, PARTES, PARTES_BICHO, ehBicho, CONQUISTAS, lookPadrao, liberado, nivelDe, faixaNivel, itensNovos } from './avatar.js';
 import { montarRecap, passoEm } from './recap.js';
 import * as som from './audio.js';
 import * as net from './net.js';
@@ -104,6 +104,22 @@ async function sincronizarPerfil() {
   desenharInicio();
 }
 
+// ---------- tema claro/escuro ----------
+function aplicarTema(t) {
+  document.documentElement.dataset.tema = t;
+  $('btnTema').textContent = t === 'escuro' ? '☀️' : '🌙';
+  $('btnTema').setAttribute('aria-label', t === 'escuro' ? 'Tema claro' : 'Tema escuro');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', t === 'escuro' ? '#1b1636' : '#6c5ce7');
+}
+let tema = 'claro';
+try { tema = localStorage.getItem('cp_tema') || 'claro'; } catch {}
+aplicarTema(tema);
+$('btnTema').onclick = () => {
+  tema = tema === 'escuro' ? 'claro' : 'escuro';
+  try { localStorage.setItem('cp_tema', tema); } catch {}
+  aplicarTema(tema); som.sfx('tile', 4);
+};
+
 function desenharInicio() {
   const temTag = !!P.tag;
   $('perfilResumo').hidden = !temTag;
@@ -163,7 +179,7 @@ $('btnSalvarTag').onclick = async () => {
 };
 
 // ---------- editor do boneco ----------
-let rascunho = null, abaAtual = 'pele';
+let rascunho = null, abaAtual = 'tipo';
 function abrirEditor() {
   rascunho = { ...P.look };
   $('tagEdit').value = P.tag;
@@ -177,7 +193,10 @@ function abrirEditor() {
 }
 function desenharEditor() {
   $('previaGrande').innerHTML = avatarSVG(rascunho, 110);
-  $('abasPartes').innerHTML = PARTES.map(([k, nome]) => `<button class="aba ${k === abaAtual ? 'on' : ''}" data-k="${k}">${nome}</button>`).join('');
+  // bichinho não tem pele, cabelo, barba, boca nem roupa: mostra só o que vale pra ele
+  const partes = ehBicho(rascunho) ? PARTES.filter(([k]) => PARTES_BICHO.includes(k)).map(([k, n]) => [k, k === 'corRoupa' ? 'Lencinho' : n]) : PARTES;
+  if (!partes.some(([k]) => k === abaAtual)) abaAtual = 'tipo';
+  $('abasPartes').innerHTML = partes.map(([k, nome]) => `<button class="aba ${k === abaAtual ? 'on' : ''}" data-k="${k}">${nome}</button>`).join('');
   const n = nivel();
   $('itensParte').innerHTML = CATALOGO[abaAtual].map(it => {
     const ok = liberado(it, n, P.ach);
