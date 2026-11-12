@@ -421,7 +421,7 @@ html[data-tema="escuro"] { --papel: #262046; --tinta: #f1ecff; --escuro-txt: #2b
 .fx-aviso-solto {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 5; pointer-events: none;
   background: rgba(20, 70, 10, .85); color: #fff; font-weight: 800; font-size: 19px; padding: 8px 16px; border-radius: 18px;
-  white-space: nowrap; transition: opacity .3s; inset: auto;
+  white-space: nowrap; transition: opacity .3s; right: auto; bottom: auto;
 }
 .fx-aviso-solto.some { opacity: 0; }
 
