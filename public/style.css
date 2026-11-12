@@ -367,3 +367,9 @@ html[data-tema="escuro"] { --papel: #262046; --tinta: #f1ecff; --escuro-txt: #2b
 .msg-email { margin: 0; }
 .msg-email:empty { display: none; }
 [data-tema="escuro"] .form-email { border-color: #3b3266; }
+
+/* dicas */
+.tile.dica { animation: dicaPulsa 1.1s ease-in-out infinite; box-shadow: 0 0 0 4px #fff, 0 0 22px 6px rgba(255,255,255,.85); z-index: 2; }
+.tile.dica1 { box-shadow: 0 0 0 5px var(--amarelo), 0 0 26px 8px rgba(255,225,77,.9); }
+@keyframes dicaPulsa { 50% { transform: scale(1.1); } }
+.bolha.dica { background: var(--amarelo); color: #2b1d5c; font-size: 24px; letter-spacing: 1px; animation: pop .45s; }

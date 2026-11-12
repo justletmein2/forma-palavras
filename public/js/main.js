@@ -1,4 +1,4 @@
-import { loadDict, dictReady, lookup, pontos, gerarGrade, resolver, exibir, raridade, semAcento } from './dict.js';
+import { loadDict, dictReady, lookup, pontos, gerarGrade, resolver, exibir, raridade, semAcento, caminhoDe } from './dict.js';
 import { criarTabuleiro } from './board.js';
 import { avatarSVG, CATALOGO, PARTES, partesDe, normalizar, CONQUISTAS, lookPadrao, liberado, nivelDe, faixaNivel, itensNovos } from './avatar.js';
 import { montarRecap, passoEm } from './recap.js';
@@ -451,16 +451,16 @@ $('btnDeNovo').onclick = () => (S.modo === 'online' ? comecarOnline() : novaRoda
 // =====================================================================
 const tab = criarTabuleiro($('tabuleiro'), {
   onChange: txt => { if (txt) { limparBolha(); $('bolha').textContent = txt; } },
-  onTile: n => som.sfx('tile', n),
+  onTile: (n, voltou) => { som.sfx('tile', n); if (n === 1 && !voltou) S.ultimaTentativa = agora(); },
   onSubmit: enviarPalavra,
 });
 
 let bolhaT;
 function limparBolha() { clearTimeout(bolhaT); const b = $('bolha'); b.className = 'bolha'; b.textContent = ''; }
-function bolha(texto, tipo) {
+function bolha(texto, tipo, ms = 900) {
   const b = $('bolha'); clearTimeout(bolhaT);
   b.className = 'bolha'; void b.offsetWidth; b.className = 'bolha ' + tipo; b.textContent = texto;
-  bolhaT = setTimeout(limparBolha, 900);
+  bolhaT = setTimeout(limparBolha, ms);
 }
 
 function novaRodadaSolo() {
@@ -472,6 +472,7 @@ async function iniciarRodada(m) {
   Object.assign(S, {
     round: m.round, grid: m.grid, startAt: m.startAt, dur: m.dur || DURACAO, family: !!m.family,
     achadas: new Map(), score: 0, fase: 'contagem', ultimaContagem: null, recap: null, passoAtual: -1, ganhos: null,
+    possiveis: null, ultimaTentativa: 0, dicaPalavra: null, dicaNivel: 0,
   });
   if (S.modo === 'online') net.atualizarEu(S.code, { ...meuPublico(), round: S.round, score: 0, count: 0, words: null, online: true }).catch(() => {});
   $('meusPontos').textContent = '0';
@@ -487,8 +488,27 @@ async function iniciarRodada(m) {
 }
 
 // Dedo saiu da tela: confere a palavra
+// ---------- dicas ----------
+// Ficou ~9 s sem tentar nada: dica sobre a MENOR palavra que a pessoa ainda não achou.
+// Cada dica nova na mesma palavra acende mais uma letra do caminho.
+const ESPERA_DICA = 9000;
+function darDica(t) {
+  S.ultimaTentativa = t;
+  const alvo = (S.possiveis || []).find(w => !S.achadas.has(w));
+  if (!alvo) return;
+  if (alvo !== S.dicaPalavra) { S.dicaPalavra = alvo; S.dicaNivel = 0; }
+  S.dicaNivel = Math.min(S.dicaNivel + 1, alvo.length - 1);
+  const cam = caminhoDe(alvo, S.grid);
+  if (!cam) return;
+  tab.dica(cam.slice(0, S.dicaNivel));
+  const comeco = cam.slice(0, S.dicaNivel).map(i => S.grid[i]).join('');
+  bolha(`💡 ${alvo.length} letras: ${comeco}${'_'.repeat(alvo.length - S.dicaNivel)}`, 'dica', 3500);
+  som.sfx('brilho');
+}
+
 function enviarPalavra(letras, caminho) {
   if (S.fase !== 'jogando') return;
+  S.ultimaTentativa = agora();
   if (letras.length < 3) { if (letras.length === 2) { bolha(letras, 'erro'); som.sfx('bad'); } return; }
   const plain = semAcento(letras.toLowerCase());
   const r = lookup(plain, S.family);
@@ -497,6 +517,7 @@ function enviarPalavra(letras, caminho) {
   if (S.achadas.has(r.plain)) { bolha(r.word.toUpperCase() + ' já foi!', 'rep'); tab.piscar(caminho, 'rep'); som.sfx('repeat'); return; }
   const pts = pontos(r.plain.length);
   S.achadas.set(r.plain, pts); S.score += pts;
+  if (r.plain === S.dicaPalavra) { S.dicaPalavra = null; S.dicaNivel = 0; tab.dica([]); }
   bolha(`${r.word.toUpperCase()} +${pts}`, 'ok');
   tab.piscar(caminho, 'ok');
   som.sfx(r.plain.length >= 6 ? 'big' : 'good', r.plain.length - 3);
@@ -535,6 +556,9 @@ function tique() {
     }
     if (!dictReady()) return;
     S.fase = 'jogando';
+    // todas as palavras do quadro, da menor pra maior (e das mais conhecidas primeiro), pras dicas
+    S.possiveis = [...resolver(S.grid, S.family)].sort((a, b) => a.length - b.length || raridade(a) - raridade(b));
+    S.ultimaTentativa = t; S.dicaPalavra = null; S.dicaNivel = 0; tab.dica([]);
     const c = $('contagem'); c.textContent = 'JÁ!'; som.sfx('count', 1);
     setTimeout(() => { c.hidden = true; }, 500);
     tab.travar(false);
@@ -548,7 +572,8 @@ function tique() {
     $('barraTempo').parentElement.classList.toggle('acabando', acabando);
     if (seg <= 30) som.setTempo(seg <= 10 ? 140 : 126);
     if (acabando && seg !== S.ultimaContagem && seg > 0) { S.ultimaContagem = seg; som.sfx('tick'); }
-    if (resta <= 0) acabouTempo();
+    if (resta <= 0) { tab.dica([]); acabouTempo(); }
+    else if (!tab.segurando() && t - S.ultimaTentativa > ESPERA_DICA) darDica(t);
   }
   if (S.fase === 'espera' && t >= S.recapIni) comecarRecap();
   if (S.fase === 'recap') rodarRecap(t);

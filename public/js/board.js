@@ -46,6 +46,8 @@ export function criarTabuleiro(el, { onChange, onSubmit, onTile }) {
     if (i < 0) return;
     if (!path.length) { path.push(i); onTile(path.length); desenhar(); return; }
     const last = path[path.length - 1];
+    // Voltou pra letra anterior: desfaz a última letra
+    if (path.length >= 2 && i === path[path.length - 2]) { path.pop(); onTile(path.length, true); desenhar(); return; }
     // Regras: letra já usada não entra de novo e não dá pra pular letra (só vizinhas).
     if (path.includes(i) || !adjacentes(last, i)) return;
     path.push(i); onTile(path.length); desenhar();
@@ -83,6 +85,11 @@ export function criarTabuleiro(el, { onChange, onSubmit, onTile }) {
 
   return {
     setGrid(g) { grid = g; tiles.forEach((t, i) => { t.firstChild.textContent = g[i] || ''; }); },
+    segurando() { return ativo; },
+    dica(idx) {
+      tiles.forEach(t => t.classList.remove('dica', 'dica1'));
+      idx.forEach((i, k) => tiles[i].classList.add('dica', ...(k === 0 ? ['dica1'] : [])));
+    },
     travar(v) { travado = v; if (v) { ativo = false; path = []; desenhar(); } },
     piscar(idx, tipo) {
       idx.forEach(i => { tiles[i].classList.remove('ok', 'erro', 'rep'); void tiles[i].offsetWidth; tiles[i].classList.add(tipo); });

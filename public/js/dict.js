@@ -141,3 +141,17 @@ export function gerarGrade(seed = Date.now()) {
 export function exibir(plain) { return display.get(plain) || plain; }
 export function raridade(plain) { return rank.get(plain) ?? 1e9; }
 export function ehPalavrao(plain) { return palavroes.has(plain); }
+
+// Um caminho no quadro que forma a palavra (lista de casas), ou null
+export function caminhoDe(plain, grid) {
+  const g = grid.toLowerCase(), w = plain.toLowerCase(), res = [], usado = new Set();
+  const vai = (i, k) => {
+    if (g[i] !== w[k] || usado.has(i)) return false;
+    usado.add(i); res.push(i);
+    if (k === w.length - 1) return true;
+    for (const j of VIZ[i]) if (vai(j, k + 1)) return true;
+    usado.delete(i); res.pop(); return false;
+  };
+  for (let i = 0; i < 36; i++) if (vai(i, 0)) return res;
+  return null;
+}
