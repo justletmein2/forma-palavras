@@ -270,6 +270,16 @@ $('itensParte').onclick = e => {
 $('btnEditar').onclick = abrirEditor;
 $('btnEditar2').onclick = abrirEditor;
 $('btnVoltarPerfil').onclick = () => { mostrar('telaInicio'); };
+// Tira chapéu, acessório, barba etc. e volta olhos/boca/roupa/fundo ao básico.
+// O personagem e o "corpo" dele (pele, cabelo, cor do pelo, modelo do robô...) ficam.
+$('btnTirarTudo').onclick = () => {
+  Object.assign(rascunho, {
+    chapeu: 'nada', acessorio: 'nada', barba: 'nada', olhos: 'normal', boca: 'sorriso',
+    roupa: 'camiseta', corRoupa: CATALOGO.corRoupa[0].id, fundo: CATALOGO.fundo[0].id,
+  });
+  desenharEditor(); som.sfx('whoosh');
+  toast('🧹 Tudo tirado! Se não gostar, toque em "Voltar sem salvar"');
+};
 $('btnSalvarPerfil').onclick = async () => {
   const b = $('btnSalvarPerfil'); b.disabled = true;
   const nova = $('tagEdit').value.trim();
