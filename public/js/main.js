@@ -1,4 +1,5 @@
-import { loadDict, dictReady, lookup, pontos, gerarGrade, resolver, exibir, raridade, semAcento, caminhoDe } from './dict.js';
+import { loadDict, dictReady, lookup, pontos, gerarGrade, resolver, exibir, raridade, semAcento, caminhoDe, ehPalavrao } from './dict.js';
+import { TROFEUS, GRAUS, trofeu, conferir, contar } from './trofeus.js';
 import { criarTabuleiro } from './board.js';
 import { avatarSVG, comemoracaoHTML, textoFrase, CATALOGO, PARTES, partesDe, normalizar, rotuloCor, CONQUISTAS, lookPadrao, liberado, nivelDe, faixaNivel, itensNovos } from './avatar.js';
 import { montarRecap, passoEm } from './recap.js';
@@ -102,6 +103,7 @@ async function sincronizarPerfil() {
     console.warn(e);
     $('contaLinha').textContent = '⚠️ Sem conexão com o servidor agora.';
   }
+  if (P.tag && conferir(P, nivel()).length) guardar(); // troféus de quem já jogava antes deles existirem
   desenharInicio();
 }
 
@@ -131,6 +133,7 @@ function desenharInicio() {
     const f = faixaNivel(P.xp || 0);
     $('nivelResumo').textContent = 'Nv ' + f.n;
     $('xpBarra').style.width = Math.round(f.frac * 100) + '%';
+    $('btnTrofeus').innerHTML = `🏆 ${contar(P)}/${TROFEUS.length}`;
   }
   const conta = $('contaLinha');
   if (!net.onlineDisponivel()) conta.textContent = 'Seu progresso fica salvo neste aparelho.';
@@ -139,7 +142,7 @@ function desenharInicio() {
     const c = net.conta();
     conta.innerHTML = c.logado
       ? `✅ Progresso salvo ${c.tipo === 'google' ? 'na conta Google' : 'no e-mail'} <b>${esc(c.email || '')}</b> <button id="btnSair" class="mini">Sair</button>`
-      : `<span>Salve seu progresso pra não perder o boneco se trocar de celular:</span>
+      : `<span>${faixaNivel(P.xp || 0).n >= 2 ? `⚠️ Você já está no <b>nível ${faixaNivel(P.xp || 0).n}</b>! Salve pra não perder seu boneco e o que desbloqueou:` : 'Salve seu progresso pra não perder o boneco se trocar de celular:'}</span>
          <button id="btnGoogle" class="botao-google"><b style="color:#4285f4">G</b> Google</button>
          <button id="btnEmail" class="botao-google">✉️ E-mail</button>`;
     const bg = $('btnGoogle'), be = $('btnEmail'), bs = $('btnSair');
@@ -147,8 +150,11 @@ function desenharInicio() {
     if (be) be.onclick = () => { $('formEmail').hidden = false; $('erroEmail').textContent = ''; $('emailLogin').focus(); };
     if (bs) bs.onclick = async () => { await net.sair(); P = { tag: '', look: lookPadrao(), xp: 0, games: 0, wins: 0, ach: {}, pagas: [] }; guardarLocal(); desenharInicio(); };
     if (c.logado) $('formEmail').hidden = true;
+    conta.classList.toggle('alerta', !c.logado && faixaNivel(P.xp || 0).n >= 2);
   }
 }
+// Lembrete no fim da partida pra quem ainda não salvou o progresso numa conta
+const precisaSalvar = () => net.onlineDisponivel() && !net.modoLocal() && net.conectado() && !net.conta().logado;
 
 // Depois de entrar numa conta: usa o perfil dela, ou guarda nela o progresso atual
 async function depoisDeEntrar(onde) {
@@ -164,6 +170,8 @@ const EMBUTIDO = !navigator.standalone && (/FBAN|FBAV|FB_IAB|Instagram|WhatsApp|
   || (IOS && !/Safari\//.test(UA) && !/CriOS|FxiOS|EdgiOS/.test(UA)));
 function avisoNavegador() {
   const url = location.href;
+  $('avisoNavTitulo').textContent = 'Abra no navegador 🌐';
+  $('btnCopiarLink').hidden = $('btnUsarEmail').hidden = $('avisoNavOu').hidden = false;
   $('avisoNavTxt').innerHTML = IOS
     ? 'O Google não deixa entrar por dentro deste app. Toque em <b>•••</b> ou no ícone de compartilhar e escolha <b>Abrir no Safari</b>. Depois é só entrar com Google lá.'
     : 'O Google não deixa entrar por dentro deste app. Abra o jogo no Chrome e entre com Google lá.';
@@ -177,6 +185,24 @@ function avisoNavegador() {
   $('avisoNav').hidden = false;
 }
 $('btnFecharAviso').onclick = () => { $('avisoNav').hidden = true; };
+
+// ---------- virar "app" no celular (ícone na tela inicial, tela cheia, treino sem internet) ----------
+const INSTALADO = navigator.standalone || matchMedia('(display-mode: standalone)').matches;
+let pedidoInstalar = null;
+if ('serviceWorker' in navigator) {
+  addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+}
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); pedidoInstalar = e; $('btnInstalar').hidden = false; });
+addEventListener('appinstalled', () => { pedidoInstalar = null; $('btnInstalar').hidden = true; toast('Instalado! Procure o ícone na tela do celular 🎉'); });
+// No iPhone não existe o pedido automático: mostramos o passo a passo (só no Safari)
+if (IOS && !INSTALADO && !EMBUTIDO) $('btnInstalar').hidden = false;
+$('btnInstalar').onclick = async () => {
+  if (pedidoInstalar) { pedidoInstalar.prompt(); await pedidoInstalar.userChoice.catch(() => {}); pedidoInstalar = null; $('btnInstalar').hidden = true; return; }
+  $('avisoNavTitulo').textContent = 'Instalar no iPhone 📲';
+  $('avisoNavTxt').innerHTML = 'Toque no ícone de <b>compartilhar</b> (o quadrado com a setinha pra cima ⬆️) e escolha <b>Adicionar à Tela de Início</b>. Pronto: o jogo vira um ícone e abre em tela cheia!';
+  $('btnAbrirChrome').hidden = $('btnCopiarLink').hidden = $('btnUsarEmail').hidden = $('avisoNavOu').hidden = true;
+  $('avisoNav').hidden = false;
+};
 
 async function entrarGoogle() {
   if (EMBUTIDO) { avisoNavegador(); return; }
@@ -227,8 +253,9 @@ async function definirTag(tag, antiga) {
   tag = (tag || '').trim();
   if (!TAG_OK.test(tag)) return 'Use de 3 a 14 letras, números ou _ (sem espaço)';
   if (net.onlineDisponivel()) {
-    try { await net.conectar(); } catch { return 'Sem conexão para conferir o gamertag'; }
-    if (!(await net.reservarTag(tag, antiga))) return 'Esse gamertag já tem dono 😬 Tenta outro';
+    let ok = true;
+    try { await net.conectar(); } catch { ok = false; } // sem internet: guarda aqui e confere quando voltar
+    if (ok && !(await net.reservarTag(tag, antiga))) return 'Esse gamertag já tem dono 😬 Tenta outro';
   }
   P.tag = tag;
   return null;
@@ -269,7 +296,7 @@ function desenharEditor() {
   const n = nivel();
   $('itensParte').innerHTML = CATALOGO[abaAtual].map(it => {
     const ok = liberado(it, n, P.ach);
-    const req = it.ach ? '🏅 Conquista' : `Nível ${it.lvl}`;
+    const req = it.ach ? '🏆 Troféu' : `Nível ${it.lvl}`;
     return `<button class="item ${rascunho[abaAtual] === it.id ? 'on' : ''} ${ok ? '' : 'preso'}" data-id="${it.id}">
       ${ok ? '' : '<span class="cadeado">🔒</span>'}
       ${abaAtual === 'frase' ? `<span class="balao-item">${esc(it.nome)}</span>`
@@ -289,13 +316,56 @@ $('itensParte').onclick = e => {
   const it = CATALOGO[abaAtual].find(x => x.id === b.dataset.id);
   if (!liberado(it, nivel(), P.ach)) {
     som.sfx('bad');
-    toast(it.ach ? `🔒 ${it.nome}: ${CONQUISTAS[it.ach]}` : `🔒 ${it.nome}: chegue ao nível ${it.lvl}`);
+    toast(it.ach ? `🔒 ${it.nome}: troféu “${trofeu(it.ach)?.nome || it.ach}” (${(trofeu(it.ach)?.desc || CONQUISTAS[it.ach] || '').replace(/\.$/, '')})` : `🔒 ${it.nome}: chegue ao nível ${it.lvl}`);
     return;
   }
   rascunho[abaAtual] = it.id; som.sfx('tile', 5); desenharEditor();
 };
 $('btnEditar').onclick = abrirEditor;
 $('btnEditar2').onclick = abrirEditor;
+
+// ---------- troféus ----------
+function ganharTrofeus(extras) {
+  const novos = conferir(P, nivel(), null, extras);
+  if (!novos.length) return;
+  guardar(); novos.forEach(mostrarTrofeu);
+}
+// aviso que desce do topo, um de cada vez (igual videogame)
+const filaTrofeus = [];
+function mostrarTrofeu(id) {
+  filaTrofeus.push(id);
+  if (filaTrofeus.length === 1) proximoTrofeu();
+}
+function proximoTrofeu() {
+  const id = filaTrofeus[0]; if (!id) return;
+  const t = trofeu(id), el = $('trofeuPop');
+  el.className = 'trofeu-pop ' + t.grau;
+  el.innerHTML = `<span class="tp-icone">${t.icone}</span><span class="tp-txt"><small>${t.grau === 'platina' ? 'Você platinou o jogo!' : 'Troféu de ' + GRAUS[t.grau].toLowerCase()}</small><b>${esc(t.nome)}</b></span>`;
+  el.hidden = false;
+  requestAnimationFrame(() => el.classList.add('show'));
+  som.sfx(t.grau === 'platina' ? 'fanfarra' : 'trofeu');
+  if (t.grau === 'platina') confete(160);
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => { el.hidden = true; filaTrofeus.shift(); proximoTrofeu(); }, 400); }, t.grau === 'platina' ? 4200 : filaTrofeus.length > 2 ? 1900 : 2800);
+}
+function abrirTrofeus() {
+  const tem = contar(P);
+  $('trofeusResumo').innerHTML = ['bronze', 'prata', 'ouro', 'platina'].map(g => {
+    const ts = TROFEUS.filter(t => t.grau === g);
+    return `<span class="tr-cont ${g}"><i></i>${ts.filter(t => P.ach && P.ach[t.id]).length}/${ts.length}</span>`;
+  }).join('');
+  $('trofeusBarra').style.width = Math.round(tem / TROFEUS.length * 100) + '%';
+  $('trofeusPct').textContent = Math.round(tem / TROFEUS.length * 100) + '%';
+  $('listaTrofeus').innerHTML = [...TROFEUS].reverse().map(t => {
+    const ok = !!(P.ach && P.ach[t.id]);
+    return `<li class="trofeu ${t.grau} ${ok ? 'ganho' : 'falta'}">
+      <span class="tr-icone">${ok ? t.icone : '🔒'}</span>
+      <div><b>${esc(t.nome)}</b><small>${esc(t.desc)}</small></div>
+      <span class="tr-grau">${GRAUS[t.grau]}</span></li>`;
+  }).join('');
+  mostrar('telaTrofeus');
+}
+$('btnTrofeus').onclick = abrirTrofeus;
+$('btnVoltarTrofeus').onclick = () => { desenharInicio(); mostrar('telaInicio'); };
 $('btnVoltarPerfil').onclick = () => { mostrar('telaInicio'); };
 // Tira chapéu, acessório, barba etc. e volta olhos/boca/roupa/fundo ao básico.
 // O personagem e o "corpo" dele (pele, cabelo, cor do pelo, modelo do robô...) ficam.
@@ -316,6 +386,7 @@ $('btnSalvarPerfil').onclick = async () => {
   }
   P.look = { ...rascunho };
   await guardar();
+  ganharTrofeus(['estilo']);
   b.disabled = false;
   som.sfx('good', 3);
   desenharInicio();
@@ -323,20 +394,18 @@ $('btnSalvarPerfil').onclick = async () => {
 };
 
 // ---------- recompensas ----------
-function darRecompensas(chave, pontosFinais, venceu, nJog, minhasPalavras, minhasExclusivas) {
+function darRecompensas(chave, pontosFinais, venceu, nJog, minhasPalavras, minhasExclusivas, extra = {}) {
   if (P.pagas.includes(chave)) return null;
   const antes = { nivel: nivel(), ach: { ...P.ach } };
   const ganho = pontosFinais + 10 + (venceu && nJog > 1 ? 25 : 0);
   P.xp = (P.xp || 0) + ganho;
   P.games = (P.games || 0) + 1;
-  if (venceu && nJog > 1) { P.wins = (P.wins || 0) + 1; P.ach.vitoria = true; }
-  if (minhasPalavras.some(w => w.length >= 8)) P.ach.longa = true;
-  if (nJog > 1 && minhasExclusivas >= 10) P.ach.exclusivas = true;
-  if (P.games >= 30) P.ach.maratona = true;
+  if (venceu && nJog > 1) P.wins = (P.wins || 0) + 1;
+  const trofeus = conferir(P, nivel(), { ...extra, nJog, venceu, pontos: pontosFinais, palavras: minhasPalavras, exclusivas: minhasExclusivas, palavrao: ehPalavrao });
   P.pagas = [...P.pagas, chave].slice(-30);
   guardar();
   const depois = { nivel: nivel(), ach: P.ach };
-  return { ganho, subiu: depois.nivel > antes.nivel, nivel: depois.nivel, novos: itensNovos(antes, depois) };
+  return { ganho, subiu: depois.nivel > antes.nivel, nivel: depois.nivel, novos: itensNovos(antes, depois), trofeus };
 }
 
 // =====================================================================
@@ -396,7 +465,7 @@ function voltarAoInicio() {
   try { sessionStorage.removeItem('cp_sala'); } catch {}
   if (S.sairSala) S.sairSala();
   Object.assign(S, { sairSala: null, modo: null, code: null, meta: null, players: {}, fase: 'inicio', round: -1, recap: null });
-  tab.travar(true); som.setTempo(112);
+  tab.travar(true); som.setMusica('menu');
   const q = new URLSearchParams(location.search); q.delete('sala');
   history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : ''));
   desenharInicio();
@@ -556,6 +625,7 @@ $('poderAlvos').onclick = e => {
   fecharEscolha();
   net.atualizarEu(S.code, { ataque: { round: p.round, k: p.k, para: alvo, tipo: p.tipo, em: net.agora() } }).catch(() => {});
   toast(`${PODERES[p.tipo].icone} Você atrapalhou ${nome}! 😈`);
+  ganharTrofeus(['pestinha']);
 };
 
 // Alguém usou um poder: se foi em mim, aplica; senão, só avisa
@@ -635,7 +705,7 @@ async function iniciarRodada(m) {
   $('contagem').hidden = false; $('contagem').textContent = '3';
   mostrar('telaJogo');
   desenharPlacarVivo();
-  som.setTempo(112);
+  som.setMusica('partida');
   pedirTelaAcesa();
   if (!dictReady()) await garantirDicionario();
 }
@@ -723,7 +793,7 @@ function tique() {
     $('txtTempo').textContent = `${Math.floor(seg / 60)}:${String(seg % 60).padStart(2, '0')}`;
     const acabando = seg <= 10;
     $('barraTempo').parentElement.classList.toggle('acabando', acabando);
-    if (seg <= 30) som.setTempo(seg <= 10 ? 140 : 126);
+    if (seg <= 30) som.setUrgencia(seg <= 10 ? 1.18 : 1.08);
     if (acabando && seg !== S.ultimaContagem && seg > 0) { S.ultimaContagem = seg; som.sfx('tick'); }
     if (resta <= 0) { tab.dica([]); acabouTempo(); }
     else if (!S.espectador && !tab.segurando() && t - S.ultimaTentativa > ESPERA_DICA) darDica(t);
@@ -746,7 +816,7 @@ function acabouTempo() {
   S.fase = 'espera';
   fx.limpar(); fecharEscolha();
   tab.travar(true);
-  som.sfx('end'); som.setTempo(100);
+  som.sfx('end'); som.setMusica('recap');
   liberarTela();
   $('contagem').hidden = false; $('contagem').textContent = '⏰';
   S.recapIni = S.startAt + S.dur * 1000 + (S.modo === 'online' ? GRACA_RECAP : 1200);
@@ -862,14 +932,16 @@ const tamPalavra = w => `style="font-size:min(54px, ${(112 / Math.max(w.length, 
 function comecarRecap() {
   const js = dadosDaRodada();
   S.recapJog = Object.fromEntries(js.map(j => [j.id, j]));
-  S.recap = montarRecap(js, maiorPossivel());
+  const maior = maiorPossivel();
+  S.recap = montarRecap(js, maior);
   S.passoAtual = -1;
   S.fase = 'recap';
   montarReacoes(); montarMini(); montarPlacarRecap();
   // XP e desbloqueios
   const eu = S.modo === 'online' ? net.meuId() : 'eu';
   const chave = `${S.code || 'solo'}:${S.round}:${S.startAt}`;
-  S.ganhos = S.espectador || !S.recapJog[eu] ? null : darRecompensas(chave, S.recap.final[eu] || 0, S.recap.vencedores.includes(eu), js.length, S.recapJog[eu].palavras, S.recap.nExcl[eu] || 0);
+  S.ganhos = S.espectador || !S.recapJog[eu] ? null : darRecompensas(chave, S.recap.final[eu] || 0, S.recap.vencedores.includes(eu), js.length, S.recapJog[eu].palavras, S.recap.nExcl[eu] || 0,
+    { solo: S.modo !== 'online', family: S.family, maior });
   mostrar('telaRecap');
 }
 
@@ -1010,7 +1082,7 @@ $('btnPular').onclick = () => mudarCtl(c => { c.base = Math.max(c.base, S.recap.
 
 function irProFim() {
   S.fase = 'fim';
-  som.setTempo(112);
+  som.setMusica('menu');
   desenharFim();
   mostrar('telaFim');
 }
@@ -1040,7 +1112,17 @@ function desenharFim() {
       <div class="nivel-linha"><span class="nivel">Nv ${f.n}</span><div class="xp"><div style="width:${Math.round(f.frac * 100)}%"></div></div></div>
       ${g.subiu ? `<div class="desbloqueio">🎉 Subiu pro nível ${g.nivel}!</div>` : ''}
       ${g.novos.length ? `<div>Desbloqueou: <b>${g.novos.map(esc).join(', ')}</b></div><button class="mini" id="btnVerBoneco">👕 Usar no meu boneco</button>` : ''}`;
+    if (g.trofeus && g.trofeus.length) {
+      $('ganhos').insertAdjacentHTML('beforeend', `<div class="trofeus-novos">${g.trofeus.map(id => { const t = trofeu(id); return `<span class="tr-mini ${t.grau}">${t.icone} ${esc(t.nome)}</span>`; }).join('')}</div>`);
+      if (!g.trofeusMostrados) { g.trofeusMostrados = true; g.trofeus.forEach(mostrarTrofeu); }
+    }
     const bv = $('btnVerBoneco'); if (bv) bv.onclick = abrirEditor;
+    if (precisaSalvar() && (g.subiu || g.novos.length || (P.games || 0) >= 2)) {
+      $('ganhos').insertAdjacentHTML('beforeend', `<div class="lembrete-salvar">💾 Seu progresso só está neste celular.
+        <button id="btnSalvarGoogle" class="botao-google"><b style="color:#4285f4">G</b> Salvar com Google</button>
+        <small>ou com e-mail, na tela inicial</small></div>`);
+      $('btnSalvarGoogle').onclick = async () => { await entrarGoogle(); if (net.conta().logado) $('ganhos').querySelector('.lembrete-salvar')?.remove(); };
+    }
   } else $('ganhos').hidden = true;
 
   $('ranking').innerHTML = (varios ? '<p class="legenda">⭐ amarelo = exclusiva (só essa pessoa achou, vale o dobro)</p>' : '') + js.map((p, i) => {

@@ -19,6 +19,7 @@ export const CATALOGO = {
     { id: 'aprendam', nome: 'Aprendam comigo 😎', lvl: 5 }, { id: 'lenco', nome: 'Alguém tem um lencinho? 🤧', lvl: 6 },
     { id: 'suei', nome: 'Nem suei 😅', lvl: 8 }, { id: 'realeza', nome: 'Realeza das letras 👑', lvl: 10 },
     { id: 'proximo', nome: 'Próximo! 💅', lvl: 12 }, { id: 'imparavel', nome: 'Sou imparável! 🚀', ach: 'maratona' },
+    { id: 'platinei', nome: 'Platinei! 🏆', ach: 'platina' },
   ],
   // orelhas da Maltesinha
   orelhas: [
@@ -130,6 +131,7 @@ export const CATALOGO = {
     { id: 'coracoes', nome: 'Corações', cor: '#ffdbe7', lvl: 4 }, { id: 'pordosol', nome: 'Pôr do sol', cor: '#ffb27a', lvl: 6 },
     { id: 'estrelado', nome: 'Céu estrelado', cor: '#26245a', lvl: 8 }, { id: 'arcoiris', nome: 'Arco-íris', cor: '#e8f7ff', lvl: 10 },
     { id: 'confete', nome: 'Confete', cor: '#fff8ee', ach: 'maratona' },
+    { id: 'platina', nome: 'Platina', cor: '#dfe7f1', ach: 'platina' },
   ],
 };
 
@@ -170,6 +172,7 @@ export const CONQUISTAS = {
   longa: 'Achar uma palavra de 8 letras ou mais',
   exclusivas: 'Achar 10 palavras exclusivas numa partida',
   maratona: 'Jogar 30 partidas',
+  platina: 'Ganhar todos os troféus',
 };
 
 export function lookPadrao() {
@@ -557,6 +560,7 @@ function padraoFundo(id) {
     case 'estrelado': return `<g fill="#fff">${[[12, 18, 1.2], [26, 8, .8], [44, 14, 1], [62, 6, 1.3], [80, 14, .9], [90, 30, 1.1], [8, 40, .9], [92, 52, .8], [16, 62, 1], [86, 70, 1.2]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`).join('')}</g><path d="M74 26 a7 7 0 1 0 6 -9 a5.5 5.5 0 1 1 -6 9z" fill="#ffe27a"/>`;
     case 'arcoiris': return `<g fill="none" stroke-width="6">${['#ff5fa2', '#ff9f43', '#ffd23f', '#2fd47a', '#36b6ff', '#8f6bff'].map((c, i) => `<circle cx="50" cy="70" r="${54 - i * 6}" stroke="${c}"/>`).join('')}</g>`;
     case 'confete': return [[12, 20, '#ff5fa2', 20], [26, 8, '#36b6ff', -30], [44, 14, '#ffd23f', 45], [64, 8, '#2fd47a', 10], [82, 18, '#8f6bff', -20], [90, 40, '#ff9f43', 60], [8, 44, '#2fd47a', -50], [14, 66, '#ffd23f', 30], [88, 64, '#ff5fa2', -10]].map(([x, y, c, r]) => `<rect x="${x}" y="${y}" width="6" height="3" rx="1" fill="${c}" transform="rotate(${r} ${x + 3} ${y + 1.5})"/>`).join('');
+    case 'platina': return `<defs><linearGradient id="gPlat" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6f9fc"/><stop offset=".45" stop-color="#c9d4e2"/><stop offset=".55" stop-color="#eef3f9"/><stop offset="1" stop-color="#aebccf"/></linearGradient></defs><rect width="100" height="100" fill="url(#gPlat)"/><g fill="#fff">${[[14, 16, 1], [84, 14, 1.3], [10, 56, .9], [90, 54, 1.1], [50, 6, .8]].map(([x, y, e]) => `<path transform="translate(${x} ${y}) scale(${e})" d="M0 -6 L1.5 -1.5 L6 0 L1.5 1.5 L0 6 L-1.5 1.5 L-6 0 L-1.5 -1.5Z"/>`).join('')}</g>`;
     default: return '';
   }
 }

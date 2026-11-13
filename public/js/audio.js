@@ -66,45 +66,99 @@ function hat(t, vol = 0.05) {
   s.connect(f); f.connect(g); g.connect(musicBus); s.start(t);
 }
 
-// Progressão alegre: C  Am  F  G (8 passos de colcheia por acorde)
-const CHORDS = [[60, 64, 67], [57, 60, 64], [53, 57, 60], [55, 59, 62]];
-const BASS = [36, 33, 29, 31];
-// Melodia em pentatônica, 32 colcheias; -1 = pausa
-const MELODY = [
-  72, -1, 76, 79, 76, -1, 74, 72,
-  72, -1, 69, 72, 74, -1, 72, -1,
-  69, -1, 72, 74, 77, -1, 76, 74,
-  74, -1, 71, 74, 79, 77, 76, 74,
-  72, 74, 76, -1, 79, -1, 81, 79,
-  76, -1, 72, -1, 74, 76, 72, -1,
-  77, -1, 76, 74, 72, -1, 69, -1,
-  71, -1, 74, -1, 79, -1, -1, -1,
-];
+// Três músicas: menu (alegre), partida (mais agitada) e recapitulação (calminha).
+// Cada acorde dura 8 colcheias; a melodia tem 64 colcheias; -1 = pausa.
+const MUSICAS = {
+  menu: {
+    bpm: 112,
+    acordes: [[60, 64, 67], [57, 60, 64], [53, 57, 60], [55, 59, 62]], // C Am F G
+    baixo: [36, 33, 29, 31],
+    melodia: [
+      72, -1, 76, 79, 76, -1, 74, 72,  72, -1, 69, 72, 74, -1, 72, -1,
+      69, -1, 72, 74, 77, -1, 76, 74,  74, -1, 71, 74, 79, 77, 76, 74,
+      72, 74, 76, -1, 79, -1, 81, 79,  76, -1, 72, -1, 74, 76, 72, -1,
+      77, -1, 76, 74, 72, -1, 69, -1,  71, -1, 74, -1, 79, -1, -1, -1,
+    ],
+    tocar(t, s, bar, spb) {
+      const ch = this.acordes[bar], B = this.baixo[bar];
+      if (s % 8 === 0) note(musicBus, B, t, spb * 3.5, { type: 'triangle', vol: 0.45 });
+      if (s % 8 === 4) note(musicBus, B + 7, t, spb * 1.8, { type: 'triangle', vol: 0.3 });
+      if (s % 4 === 2) ch.forEach(m => note(musicBus, m, t, spb * 1.2, { type: 'sine', vol: 0.08 }));
+      const m = this.melodia[s];
+      if (m > 0) note(musicBus, m, t, spb * 1.6, { type: 'square', vol: 0.05, cutoff: 2200 });
+      if (s % 2 === 1) hat(t, 0.03);
+      if (s % 8 === 0 || s % 8 === 6) hat(t, 0.05);
+    },
+  },
+  partida: {
+    bpm: 128,
+    acordes: [[57, 60, 64], [53, 57, 60], [55, 60, 64], [55, 59, 62]], // Am F C G
+    baixo: [33, 29, 36, 31],
+    melodia: [
+      76, -1, 76, 79, 81, -1, 79, 76,  77, -1, 76, 72, 74, -1, 72, -1,
+      72, -1, 76, 79, 84, -1, 79, 76,  79, -1, 74, 79, 83, -1, 81, 79,
+      81, 79, 76, -1, 81, -1, 84, 81,  77, -1, 81, -1, 77, 76, 72, -1,
+      76, -1, 79, -1, 84, -1, 79, 76,  74, -1, 79, -1, 71, 74, -1, -1,
+    ],
+    tocar(t, s, bar, spb) {
+      const ch = this.acordes[bar], B = this.baixo[bar];
+      note(musicBus, B + (s % 2 ? 12 : 0), t, spb * 0.8, { type: 'triangle', vol: s % 2 ? 0.25 : 0.4 });
+      if (s % 4 === 0) note(musicBus, 36, t, 0.12, { type: 'sine', vol: 0.5, glide: -12 }); // bumbo
+      if (s % 4 === 2) ch.forEach(m => note(musicBus, m + 12, t, spb * 0.7, { type: 'square', vol: 0.025, cutoff: 1800 }));
+      const m = this.melodia[s];
+      if (m > 0) note(musicBus, m, t, spb * 1.3, { type: 'square', vol: 0.05, cutoff: 3000 });
+      hat(t, s % 2 ? 0.045 : 0.025);
+    },
+  },
+  recap: {
+    bpm: 92,
+    acordes: [[53, 57, 60, 64], [52, 55, 59, 62], [50, 53, 57, 60], [48, 52, 55, 59]], // F7M Em7 Dm7 C7M
+    baixo: [29, 28, 26, 24],
+    melodia: [
+      76, -1, -1, -1, 77, -1, 76, 72,  74, -1, -1, -1, -1, -1, 71, 72,
+      74, -1, 77, -1, 76, -1, 74, 72,  71, -1, 72, -1, -1, -1, -1, -1,
+      81, -1, -1, 79, 77, -1, 76, -1,  79, -1, -1, -1, 74, -1, 76, -1,
+      77, -1, 76, -1, 74, -1, 72, -1,  72, -1, -1, -1, -1, -1, -1, -1,
+    ],
+    tocar(t, s, bar, spb) {
+      const ch = this.acordes[bar], B = this.baixo[bar];
+      if (s % 8 === 0) note(musicBus, B, t, spb * 5, { type: 'sine', vol: 0.45 });
+      if (s % 8 === 6) note(musicBus, B + 7, t, spb * 2, { type: 'sine', vol: 0.25 });
+      note(musicBus, ch[[0, 1, 2, 3, 2, 1, 2, 3][s % 8]] + 12, t, spb * 1.8, { type: 'sine', vol: 0.05 }); // arpejo
+      const m = this.melodia[s];
+      if (m > 0) note(musicBus, m, t, spb * 2.6, { type: 'triangle', vol: 0.12, attack: 0.03 });
+      if (s % 4 === 2) hat(t, 0.02);
+    },
+  },
+};
+let musica = MUSICAS.menu, urgencia = 1;
 
 function schedule() {
   const spb = 60 / tempo / 2; // colcheia
   while (nextTime < ctx.currentTime + 0.15) {
-    const t = nextTime, s = step % 64, bar = Math.floor(s / 8) % 4;
-    const ch = CHORDS[bar];
-    if (s % 8 === 0) note(musicBus, BASS[bar], t, spb * 3.5, { type: 'triangle', vol: 0.45 });
-    if (s % 8 === 4) note(musicBus, BASS[bar] + 7, t, spb * 1.8, { type: 'triangle', vol: 0.3 });
-    if (s % 4 === 2) ch.forEach(m => note(musicBus, m, t, spb * 1.2, { type: 'sine', vol: 0.08 }));
-    const m = MELODY[s];
-    if (m > 0) note(musicBus, m, t, spb * 1.6, { type: 'square', vol: 0.05, cutoff: 2200 });
-    if (s % 2 === 1) hat(t, 0.03);
-    if (s % 8 === 0 || s % 8 === 6) hat(t, 0.05);
+    const s = step % 64;
+    musica.tocar(nextTime, s, Math.floor(s / 8) % 4, spb);
     nextTime += spb; step++;
   }
 }
 
-export function startMusic(bpm = 112) {
+export function startMusic() {
   unlockAudio(); if (!ctx) return;
-  tempo = bpm;
+  tempo = musica.bpm * urgencia;
   if (timer) return;
   nextTime = ctx.currentTime + 0.05; step = 0;
   timer = setInterval(schedule, 40);
 }
-export function setTempo(bpm) { tempo = bpm; }
+// Troca de música (menu, partida, recap); começa do início da nova
+export function setMusica(nome) {
+  const nova = MUSICAS[nome] || MUSICAS.menu;
+  urgencia = 1;
+  if (nova === musica) { tempo = musica.bpm; return; }
+  musica = nova; tempo = musica.bpm;
+  if (timer && ctx) { step = 0; nextTime = Math.max(nextTime, ctx.currentTime + 0.12); }
+}
+// Fim do tempo chegando: acelera a música atual (1 = normal)
+export function setUrgencia(fator) { urgencia = fator; tempo = musica.bpm * fator; }
 export function stopMusic() { clearInterval(timer); timer = null; }
 
 function ruido(t, dur, freq, vol, tipo = 'bandpass') {
@@ -159,6 +213,8 @@ export function sfx(kind, n = 0) {
     case 'poder': [72, 68, 65, 60].forEach((m, i) => note(sfxBus, m, t + i * 0.11, 0.2, { type: 'square', vol: 0.1, cutoff: 2000 }));
       note(sfxBus, 48, t + 0.44, 0.4, { type: 'sawtooth', vol: 0.1, cutoff: 900 }); break;
     case 'moeda': note(sfxBus, 88 + (n % 3) * 2, t, 0.07, { type: 'square', vol: 0.07, cutoff: 4000 }); note(sfxBus, 95 + (n % 3) * 2, t + 0.06, 0.16, { type: 'square', vol: 0.07, cutoff: 4000 }); break;
+    case 'trofeu': [[83, 0], [88, 0.09], [95, 0.18]].forEach(([m, d]) => note(sfxBus, m, t + d, 0.5, { type: 'sine', vol: 0.18 }));
+      note(sfxBus, 76, t + 0.18, 0.6, { type: 'triangle', vol: 0.12 }); break;
     case 'join':note(sfxBus, 76, t, 0.1, { type: 'sine', vol: 0.2 }); note(sfxBus, 83, t + 0.08, 0.14, { type: 'sine', vol: 0.2 }); break;
   }
 }

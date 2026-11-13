@@ -16,13 +16,17 @@ Projeto **separado** do Aura Battle: outro repositório e outro projeto Firebase
 | `public/js/dict.js` | Dicionário, acentos, geração do quadro, pontuação |
 | `public/js/recap.js` | Recapitulação e ranking final |
 | `public/js/avatar.js` | O bonequinho e a lista de cosméticos (e o nível de cada um) |
+| `public/js/trofeus.js` | Lista de troféus (bronze, prata, ouro e platina) e quando cada um é ganho |
+| `public/js/efeitos.js` | Poderes do modo Atrapalhar |
 | `public/js/audio.js` | Música e efeitos (gerados na hora, sem arquivos de áudio) |
 | `public/js/net.js` | Conexão com o Firebase (salas, perfis, login Google) |
 | `public/js/config.js` | **Onde colar a configuração do Firebase** |
-| `public/palavras.txt` | ~444 mil palavras com acento (da mais comum pra mais rara) |
+| `public/palavras.txt` | ~200 mil palavras com acento (da mais comum pra mais rara) |
 | `public/palavroes.txt` | Lista usada pelo "modo família" |
 | `database.rules.json` | Quem pode ler/escrever o quê no banco |
 | `tools/build_dict.py` | Script que gerou o dicionário |
+| `public/manifest.json`, `public/sw.js` | Fazem o site virar "app" (ícone, tela cheia, treino sem internet) |
+| `public/og.jpg` | Imagem que aparece quando o link é mandado no WhatsApp |
 
 ## Regras do jogo
 
@@ -44,3 +48,13 @@ Fontes: [pythonprobr/palavras](https://github.com/pythonprobr/palavras) (MPL-2.0
 [fserb/pt-br](https://github.com/fserb/pt-br) (MIT: léxico, conjugações e frequência) e o
 corretor VERO/LibreOffice pt-BR (pacote npm `dictionary-pt`) para aceitar plurais e flexões.
 Palavrões foram acrescentados à mão em `tools/build_dict.py` (ofensas a grupos ficaram de fora).
+
+Para gerar de novo, nesta ordem:
+1. `tools/build_dict.py` — junta as fontes;
+2. `tools/filtrar_obscuras.py palavras.txt palavroes.txt icf conjugacoes` — tira palavras raras/técnicas
+   (pela frequência do fserb/pt-br), mas mantém palavrões e as flexões de palavras comuns;
+3. `tools/completar_flexoes.py palavras.txt hunspell_base` — devolve plurais e femininos que o
+   corretor confirma.
+
+Ao mudar arquivos do site, aumente a versão em `public/sw.js` (`forma-palavras-v1` → `v2`) se
+quiser forçar todo mundo a baixar o dicionário novo.

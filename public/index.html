@@ -6,7 +6,23 @@
 <meta name="theme-color" content="#6c5ce7">
 <title>Forma Palavras</title>
 <meta name="description" content="Jogo de palavras multiplayer: todo mundo no mesmo quadro, 3 minutos pra achar o máximo de palavras.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%23ffb14e'/><text x='50' y='72' font-size='64' text-anchor='middle' font-family='Arial Black' fill='white'>P</text></svg>">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Forma Palavras">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Forma Palavras">
+<meta property="og:title" content="Forma Palavras 🔤 Bora jogar?">
+<meta property="og:description" content="Todo mundo no mesmo quadro. 3 minutos. Quem acha mais palavras?">
+<meta property="og:image" content="https://justletmein2.github.io/forma-palavras/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://justletmein2.github.io/forma-palavras/">
+<meta property="og:locale" content="pt_BR">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
@@ -34,7 +50,10 @@
       <div class="perfil-info">
         <div id="tagResumo" class="tag-resumo">—</div>
         <div class="nivel-linha"><span id="nivelResumo" class="nivel">Nv 1</span><div class="xp"><div id="xpBarra"></div></div></div>
-        <button id="btnEditar2" class="mini">✏️ Personalizar</button>
+        <div class="perfil-botoes">
+          <button id="btnEditar2" class="mini">✏️ Personalizar</button>
+          <button id="btnTrofeus" class="mini trofeus-btn">🏆 0</button>
+        </div>
       </div>
     </div>
     <div id="criarTag" class="criar-tag" hidden>
@@ -87,6 +106,7 @@
       <li>Palavra que só <b>você</b> achou vale o <b>dobro</b>!</li>
     </ul>
   </details>
+  <button id="btnInstalar" class="botao-limpar" hidden>📲 Instalar o jogo no celular</button>
   <p id="erroInicio" class="erro" role="alert"></p>
 </section>
 
@@ -107,6 +127,18 @@
   <button id="btnSalvarPerfil" class="botao rosa enorme">💾 Salvar</button>
   <button id="btnVoltarPerfil" class="link">Voltar sem salvar</button>
   <p id="erroPerfil" class="erro" role="alert"></p>
+</section>
+
+<!-- TROFÉUS -->
+<section id="telaTrofeus" class="tela">
+  <h2 class="titulo-fim">🏆 Troféus</h2>
+  <div class="cartao trofeus-topo">
+    <div id="trofeusResumo" class="trofeus-resumo"></div>
+    <div class="trofeus-prog"><div class="xp"><div id="trofeusBarra"></div></div><b id="trofeusPct">0%</b></div>
+    <small class="dica">Ganhe todos para conquistar a <b>platina</b>!</small>
+  </div>
+  <ul id="listaTrofeus" class="lista-trofeus"></ul>
+  <button id="btnVoltarTrofeus" class="botao roxo">Voltar</button>
 </section>
 
 <!-- SALA DE ESPERA -->
@@ -208,11 +240,12 @@
     <p id="avisoNavTxt"></p>
     <button id="btnAbrirChrome" class="botao azul">Abrir no Chrome</button>
     <button id="btnCopiarLink" class="botao amarelo">📋 Copiar link do jogo</button>
-    <p class="dica">Ou entre com e-mail, que funciona aqui mesmo:</p>
+    <p id="avisoNavOu" class="dica">Ou entre com e-mail, que funciona aqui mesmo:</p>
     <button id="btnUsarEmail" class="botao roxo">✉️ Entrar com e-mail</button>
     <button id="btnFecharAviso" class="link escuro">Fechar</button>
   </div>
 </div>
+<div id="trofeuPop" class="trofeu-pop" hidden role="status"></div>
 <div id="toast" class="toast"></div>
 <div id="confete" class="confete" aria-hidden="true"></div>
 
