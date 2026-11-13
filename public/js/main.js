@@ -72,13 +72,18 @@ document.addEventListener('pointerdown', () => { som.unlockAudio(); som.startMus
 const PK = 'cp_perfil2';
 // no modo de teste local cada aba é uma pessoa diferente
 const PS = net.modoLocal() ? sessionStorage : localStorage;
-let P = { tag: '', look: lookPadrao(), xp: 0, games: 0, wins: 0, ach: {}, pagas: [] };
+let P = { tag: '', look: lookPadrao(), xp: 0, games: 0, wins: 0, ach: {}, pagas: [], rec: {} };
 try { P = { ...P, ...JSON.parse(PS.getItem(PK) || '{}') }; } catch {}
 const nivel = () => nivelDe(P.xp || 0);
 function guardarLocal() { try { PS.setItem(PK, JSON.stringify(P)); } catch {} }
 async function guardar() {
   guardarLocal();
-  if (net.conectado()) await net.salvarPerfil({ tag: P.tag, look: P.look, xp: P.xp, games: P.games, wins: P.wins, ach: P.ach, pagas: P.pagas.slice(-30) }).catch(() => {});
+  const r = P.rec || {};
+  if (net.conectado()) await net.salvarPerfil({
+    tag: P.tag, look: P.look, xp: P.xp, games: P.games, wins: P.wins, ach: P.ach, pagas: P.pagas.slice(-30), rec: r,
+    // campos soltos que o ranking geral usa pra ordenar
+    rkSolo: (r.solo && r.solo.melhor) || 0, rkMulti: (r.multi && r.multi.melhor) || 0,
+  }).catch(() => {});
 }
 const TAG_OK = /^[\p{L}\p{N}_]{3,14}$/u;
 
@@ -145,7 +150,7 @@ function desenharInicio() {
     const bg = $('btnGoogle'), be = $('btnEmail'), bs = $('btnSair');
     if (bg) bg.onclick = entrarGoogle;
     if (be) be.onclick = () => { $('formEmail').hidden = false; $('erroEmail').textContent = ''; $('emailLogin').focus(); };
-    if (bs) bs.onclick = async () => { await net.sair(); P = { tag: '', look: lookPadrao(), xp: 0, games: 0, wins: 0, ach: {}, pagas: [] }; guardarLocal(); desenharInicio(); };
+    if (bs) bs.onclick = async () => { await net.sair(); P = { tag: '', look: lookPadrao(), xp: 0, games: 0, wins: 0, ach: {}, pagas: [], rec: {} }; guardarLocal(); desenharInicio(); };
     if (c.logado) $('formEmail').hidden = true;
   }
 }
@@ -297,9 +302,19 @@ function darRecompensas(chave, pontosFinais, venceu, nJog, minhasPalavras, minha
   if (nJog > 1 && minhasExclusivas >= 10) P.ach.exclusivas = true;
   if (P.games >= 30) P.ach.maratona = true;
   P.pagas = [...P.pagas, chave].slice(-30);
+  // recordes (Treino e Multiplayer contam separado, porque com mais gente tem exclusiva valendo dobrado)
+  P.rec = P.rec || {};
+  const k = nJog > 1 ? 'multi' : 'solo';
+  const r = P.rec[k] = P.rec[k] || { melhor: 0, palavras: 0, longa: '' };
+  const novos = [];
+  if (pontosFinais > r.melhor) { r.melhor = pontosFinais; novos.push('pontuação'); }
+  if (minhasPalavras.length > r.palavras) { r.palavras = minhasPalavras.length; novos.push('palavras'); }
+  const maiorMinha = minhasPalavras.slice().sort((a, b) => b.length - a.length)[0] || '';
+  if (maiorMinha.length > (r.longa || '').length) { r.longa = maiorMinha; novos.push('palavra mais longa'); }
+  P.rec.exclusivas = (P.rec.exclusivas || 0) + (nJog > 1 ? minhasExclusivas : 0);
   guardar();
   const depois = { nivel: nivel(), ach: P.ach };
-  return { ganho, subiu: depois.nivel > antes.nivel, nivel: depois.nivel, novos: itensNovos(antes, depois) };
+  return { ganho, subiu: depois.nivel > antes.nivel, nivel: depois.nivel, novos: itensNovos(antes, depois), recordes: P.games > 1 ? novos : [] };
 }
 
 // =====================================================================
@@ -401,6 +416,7 @@ function aoMudarSala(estado) {
   if (m.status === 'lobby' && S.fase !== 'sala') { S.fase = 'sala'; mostrar('telaSala'); }
   if (S.fase === 'sala') desenharSala();
   if (S.fase === 'jogando' || S.fase === 'contagem') { desenharPlacarVivo(); verPoder(); verAtaques(); }
+  if (S.fase === 'recap' || S.fase === 'fim') verReacoes();
   if (S.fase === 'fim') desenharFim();
 }
 
@@ -746,6 +762,7 @@ function comecarRecap() {
   S.recap = montarRecap(js, maiorPossivel());
   S.passoAtual = -1;
   S.fase = 'recap';
+  montarReacoes();
   // XP e desbloqueios
   const eu = S.modo === 'online' ? net.meuId() : 'eu';
   const chave = `${S.code || 'solo'}:${S.round}:${S.startAt}`;
@@ -780,6 +797,95 @@ function rodarRecap(t) {
   if (ms >= S.recap.total) { irProFim(); return; }
   const i = passoEm(S.recap, ms);
   if (i !== S.passoAtual) { S.passoAtual = i; desenharPasso(S.recap.passos[i]); }
+}
+
+// ---------- página de recordes ----------
+let abaRec = 'meus';
+$('btnRecordes').onclick = () => { if (precisaTag()) return; mostrar('telaRecordes'); abrirRec(abaRec); };
+$('btnVoltarRec').onclick = () => mostrar('telaInicio');
+document.querySelector('.abas-rec').onclick = e => { const b = e.target.closest('.aba'); if (b) { som.sfx('tile', 3); abrirRec(b.dataset.rec); } };
+
+const palavraBonita = w => (w ? (dictReady() ? exibir(w) : w).toUpperCase() : '—');
+function blocoRec(titulo, r = {}) {
+  return `<div class="rec-bloco"><div class="rotulo">${titulo}</div>
+    <div class="rec-linha"><span>Melhor pontuação</span><b>${r.melhor || 0} pts</b></div>
+    <div class="rec-linha"><span>Mais palavras numa partida</span><b>${r.palavras || 0}</b></div>
+    <div class="rec-linha"><span>Palavra mais longa</span><b>${esc(palavraBonita(r.longa))}${r.longa ? ` <small>(${r.longa.length})</small>` : ''}</b></div></div>`;
+}
+function meusRecordes() {
+  const r = P.rec || {}, f = faixaNivel(P.xp || 0);
+  return `<div class="rec-eu">${avatarSVG(P.look, 64)}<div><div class="tag-resumo">${esc(P.tag)}</div><span class="nivel">Nv ${f.n}</span> <small>${P.xp || 0} XP</small></div></div>
+    <div class="rec-numeros">
+      <div><b>${P.games || 0}</b><span>partidas</span></div>
+      <div><b>${P.wins || 0}</b><span>vitórias</span></div>
+      <div><b>${r.exclusivas || 0}</b><span>exclusivas</span></div>
+    </div>
+    ${blocoRec('Multiplayer', r.multi)}${blocoRec('Treino sozinho', r.solo)}
+    <p class="legenda">Os recordes contam a partir de 12/11/2026.</p>`;
+}
+function tabelaRanking(lista, campo) {
+  const unid = campo === 'wins' ? (n => n === 1 ? 'vitória' : 'vitórias') : (() => 'pts');
+  const eu = net.meuId();
+  if (!lista.length) return '<p class="vazio">Ninguém no ranking ainda. Jogue uma partida! 🎯</p>';
+  const meu = campo === 'wins' ? (P.wins || 0) : campo === 'rkSolo' ? ((P.rec?.solo?.melhor) || 0) : ((P.rec?.multi?.melhor) || 0);
+  const estou = lista.some(p => p.id === eu);
+  return `<ol class="ranking-lista">${lista.map((p, i) => `<li class="${p.id === eu ? 'eu' : ''}">
+      <span class="pos">${['🥇', '🥈', '🥉'][i] || (i + 1) + 'º'}</span>${avatarSVG(p.look, 40)}
+      <span class="nome-rk">${esc(p.tag || '???')}<small>Nv ${nivelDe(p.xp || 0)}</small></span>
+      <b>${p[campo]} <small>${unid(p[campo])}</small></b></li>`).join('')}</ol>
+    ${!estou ? `<p class="legenda">Você: ${meu} ${unid(meu)}${meu ? '' : ' (jogue pra entrar no ranking!)'}</p>` : ''}`;
+}
+async function abrirRec(qual) {
+  abaRec = qual;
+  document.querySelectorAll('.abas-rec .aba').forEach(b => b.classList.toggle('on', b.dataset.rec === qual));
+  const el = $('recConteudo');
+  if (qual === 'meus') { el.innerHTML = meusRecordes(); if (!dictReady()) loadDict().then(() => { if (abaRec === 'meus') el.innerHTML = meusRecordes(); }).catch(() => {}); return; }
+  if (!net.onlineDisponivel()) { el.innerHTML = '<p class="vazio">O ranking geral precisa do modo online.</p>'; return; }
+  el.innerHTML = '<p class="vazio">Carregando… ⏳</p>';
+  try {
+    await net.conectar();
+    const lista = await net.ranking(qual, 20);
+    if (abaRec === qual) el.innerHTML = tabelaRanking(lista, qual);
+  } catch (e) {
+    console.warn(e);
+    if (abaRec === qual) el.innerHTML = '<p class="vazio">Não deu pra carregar o ranking agora. Tente de novo daqui a pouco.</p>';
+  }
+}
+
+// ---------- reações na recapitulação ----------
+function montarReacoes() {
+  const lista = ['👏', '❤️', '😂', '😠', '🔥', S.family ? '👎' : '🖕'];
+  $('reacoes').innerHTML = lista.map(e => `<button class="reacao" data-e="${e}" aria-label="Reagir ${e}">${e}</button>`).join('');
+  S.reacoesVistas = new Map();
+  for (const [id, p] of Object.entries(S.players || {})) if (p.reacao) S.reacoesVistas.set(id, p.reacao.n);
+}
+let ultimaReacao = 0, contReacao = 0;
+$('reacoes').addEventListener('click', e => {
+  const b = e.target.closest('.reacao'); if (!b) return;
+  const agoraMs = Date.now();
+  if (agoraMs - ultimaReacao < 200) return; // sem metralhadora de emoji
+  ultimaReacao = agoraMs;
+  b.classList.remove('apertou'); void b.offsetWidth; b.classList.add('apertou');
+  soltarEmoji(b.dataset.e, '');
+  if (S.modo === 'online') net.atualizarEu(S.code, { reacao: { e: b.dataset.e, n: ++contReacao + Math.floor(agoraMs / 1000) * 1000, em: net.agora() } }).catch(() => {});
+});
+function verReacoes() {
+  if (!S.reacoesVistas) return;
+  for (const [id, p] of Object.entries(S.players || {})) {
+    const r = p.reacao;
+    if (!r || id === net.meuId() || S.reacoesVistas.get(id) === r.n) continue;
+    S.reacoesVistas.set(id, r.n);
+    if (net.agora() - r.em < 3000) soltarEmoji(r.e, p.name);
+  }
+}
+function soltarEmoji(e, nome) {
+  const d = document.createElement('div');
+  d.className = 'emoji-voando';
+  d.style.left = (12 + Math.random() * 76) + 'vw';
+  d.style.setProperty('--gira', (Math.random() * 40 - 20).toFixed(0) + 'deg');
+  d.innerHTML = `<span>${e}</span>${nome ? `<small>${esc(nome)}</small>` : ''}`;
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 900);
 }
 
 function cartaoJogador(id, tam = 56) {
@@ -878,6 +984,7 @@ function desenharFim() {
     $('ganhos').innerHTML = `<div class="xp-ganho">+${g.ganho} XP</div>
       <div class="nivel-linha"><span class="nivel">Nv ${f.n}</span><div class="xp"><div style="width:${Math.round(f.frac * 100)}%"></div></div></div>
       ${g.subiu ? `<div class="desbloqueio">🎉 Subiu pro nível ${g.nivel}!</div>` : ''}
+      ${g.recordes && g.recordes.length ? `<div class="desbloqueio recorde">🏆 Novo recorde: ${g.recordes.join(', ')}!</div>` : ''}
       ${g.novos.length ? `<div>Desbloqueou: <b>${g.novos.map(esc).join(', ')}</b></div><button class="mini" id="btnVerBoneco">👕 Usar no meu boneco</button>` : ''}`;
     const bv = $('btnVerBoneco'); if (bv) bv.onclick = abrirEditor;
   } else $('ganhos').hidden = true;

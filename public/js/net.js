@@ -41,6 +41,11 @@ async function backendFirebase() {
   return {
     uid: lerAuth(),
     get: async p => (await D.get(ref(p))).val(),
+    top: async (p, campo, n) => {
+      const snap = await D.get(D.query(ref(p), D.orderByChild(campo), D.limitToLast(n)));
+      const out = []; snap.forEach(c => { out.push({ id: c.key, ...c.val() }); });
+      return out;
+    },
     set: (p, v) => D.set(ref(p), v),
     update: (p, v) => D.update(ref(p), v),
     remove: p => D.remove(ref(p)),
@@ -128,6 +133,8 @@ function backendLocal() {
   return {
     uid: id,
     get: async p => structuredClone(pegar(ler(), p)),
+    top: async (p, campo, n) => Object.entries(pegar(ler(), p) || {}).map(([id, v]) => ({ id, ...v }))
+      .filter(v => typeof v[campo] === 'number').sort((a, b) => a[campo] - b[campo]).slice(-n),
     set: async (p, v) => gravar([[p, v]]),
     update: async (p, v) => gravar(Object.entries(v).map(([k, x]) => [p + '/' + k, x])),
     remove: async p => gravar([[p, null]]),
@@ -157,6 +164,11 @@ export const meuId = () => uid;
 export const conta = () => authInfo;
 
 // ---------- perfil ----------
+// Os n melhores perfis por um campo (do maior pro menor)
+export async function ranking(campo, n = 20) {
+  const lista = await B.top('profiles', campo, n);
+  return lista.filter(p => (p[campo] || 0) > 0).sort((a, b) => b[campo] - a[campo]);
+}
 export async function lerPerfil() { return (await B.get('profiles/' + uid)) || null; }
 export function salvarPerfil(dados) { return B.update('profiles/' + uid, dados); }
 
