@@ -723,6 +723,20 @@ function grito(w) {
   return lista[h % lista.length];
 }
 
+// Miniatura do quadro com o caminho da palavra destacado (letras acendem na ordem)
+function miniQuadro(w) {
+  if (!S.grid) return '';
+  const cam = caminhoDe(w, S.grid) || [];
+  const ordem = new Map(cam.map((i, k) => [i, k]));
+  const atraso = Math.min(110, 700 / Math.max(cam.length, 1));
+  const celulas = [...S.grid].map((ch, i) => ordem.has(i)
+    ? `<span class="mq on${ordem.get(i) === 0 ? ' ini' : ''}" style="--d:${Math.round(ordem.get(i) * atraso)}ms">${esc(ch)}</span>`
+    : `<span class="mq">${esc(ch)}</span>`).join('');
+  const d = cam.map((i, k) => `${k ? 'L' : 'M'}${(i % 6) * 100 + 50} ${Math.floor(i / 6) * 100 + 50}`).join(' ');
+  return `<div class="mini-quadro" aria-hidden="true">${celulas}
+    ${cam.length > 1 ? `<svg viewBox="0 0 600 600"><path d="${d}" pathLength="1" style="--t:${Math.round(cam.length * atraso)}ms"/></svg>` : ''}</div>`;
+}
+
 // tamanho da letra para a palavra caber numa linha só
 const tamPalavra = w => `style="font-size:min(54px, ${(112 / Math.max(w.length, 5)).toFixed(1)}vw)"`;
 
@@ -786,6 +800,7 @@ function desenharPasso(p) {
     html = `<div class="rc ${p.excl ? 'exclusiva' : ''}">
       ${p.excl ? '<span class="selo">⭐ EXCLUSIVA · VALE DOBRADO</span>' : ''}
       <div class="palavra-grande" ${tamPalavra(p.w)}>${esc(exibir(p.w).toUpperCase())}</div>
+      ${miniQuadro(p.w)}
       <span class="valor">+${p.pts}${p.excl ? ` <small>(${p.base}×2)</small>` : ''}</span>
       <div class="quem">${nomes}</div>
       ${grito(p.w) ? `<span class="grito g${Math.min(p.w.length, 9)}">${grito(p.w)}</span>` : ''}</div>`;
@@ -796,6 +811,7 @@ function desenharPasso(p) {
       <span class="selo">🔍 CURIOSIDADE</span>
       <p class="maior-txt">A maior palavra que dava pra formar era</p>
       <div class="palavra-grande" ${tamPalavra(p.w)}>${esc(exibir(p.w).toUpperCase())}</div>
+      ${miniQuadro(p.w)}
       <span class="valor">${p.w.length} letras</span>
       ${p.quem.length
         ? `<p class="maior-txt">🎉 E foi achada por:</p><div class="quem">${p.quem.map(id => cartaoJogador(id, 56)).join('')}</div>`

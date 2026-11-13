@@ -482,3 +482,22 @@ html[data-tema="escuro"] { --papel: #262046; --tinta: #f1ecff; --escuro-txt: #2b
 [data-tema="escuro"] .poder-info small, [data-tema="escuro"] .alvo small { color: #a99fcf; }
 [data-tema="escuro"] .poder-rotulo { color: #b3a6ff; }
 [data-tema="escuro"] .poder-tempo { background: #3b3266; }
+
+/* miniatura do quadro na recapitulação */
+.mini-quadro {
+  position: relative; display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px;
+  width: min(180px, 48vw); max-width: 100%; aspect-ratio: 1; padding: 5px; border-radius: 14px;
+  background: var(--roxo-esc); box-shadow: 0 3px 0 rgba(0,0,0,.2);
+}
+.mq { display: grid; place-items: center; border-radius: 5px; background: rgba(255,255,255,.16); color: rgba(255,255,255,.5);
+  font-weight: 800; font-size: clamp(11px, 4vw, 16px); line-height: 1; }
+.mq.on { background: var(--amarelo); color: #2b1d5c; animation: mqAcende .35s backwards; animation-delay: var(--d, 0ms); }
+.mq.ini { box-shadow: 0 0 0 2px #fff; }
+@keyframes mqAcende { from { background: rgba(255,255,255,.16); color: rgba(255,255,255,.5); transform: scale(.7); } 60% { transform: scale(1.18); } }
+.mini-quadro svg { position: absolute; inset: 5px; width: calc(100% - 10px); height: calc(100% - 10px); pointer-events: none; }
+.mini-quadro path { fill: none; stroke: var(--rosa); stroke-width: 14; stroke-linecap: round; stroke-linejoin: round; opacity: .5;
+  stroke-dasharray: 1; stroke-dashoffset: 1; animation: mqTraco var(--t, 500ms) linear .1s forwards; }
+@keyframes mqTraco { to { stroke-dashoffset: 0; } }
+.rc { gap: 10px; }
+@media (max-height: 700px) { .mini-quadro { width: min(140px, 38vw); } }
+@media (prefers-reduced-motion: reduce) { .mini-quadro path { stroke-dashoffset: 0; } }
