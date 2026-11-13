@@ -224,7 +224,7 @@ $('btnSalvarTag').onclick = async () => {
 // ---------- editor do boneco ----------
 let rascunho = null, abaAtual = 'tipo';
 function abrirEditor() {
-  rascunho = { tipo: 'pessoa', plumagem: 'sanhaco', ...normalizar(P.look) };
+  rascunho = { tipo: 'pessoa', plumagem: 'sanhaco', pelagem: 'laranja', ...normalizar(P.look) };
   $('tagEdit').value = P.tag;
   const f = faixaNivel(P.xp || 0);
   $('nivelEditor').textContent = 'Nv ' + f.n;

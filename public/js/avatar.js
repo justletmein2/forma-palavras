@@ -4,7 +4,14 @@
 export const CATALOGO = {
   tipo: [
     { id: 'pessoa', nome: 'Pessoa' }, { id: 'caramelo', nome: 'Carmelinha' }, { id: 'morcego', nome: 'Drácula' },
-    { id: 'passaro', nome: 'Passarinho' },
+    { id: 'passaro', nome: 'Passarinho' }, { id: 'maltes', nome: 'Maltesinha' }, { id: 'gato', nome: 'Gatinho' },
+  ],
+  // cores do gatinho (a maioria desbloqueia jogando)
+  pelagem: [
+    { id: 'laranja', nome: 'Laranjinha' }, { id: 'cinza', nome: 'Cinzinha' }, { id: 'preto', nome: 'Pretinho', lvl: 2 },
+    { id: 'branco', nome: 'Branquinho', lvl: 3 }, { id: 'frajola', nome: 'Frajola', lvl: 4 }, { id: 'siames', nome: 'Siamês', lvl: 5 },
+    { id: 'rajado', nome: 'Rajado', lvl: 6 }, { id: 'tricolor', nome: 'Tricolor', lvl: 7 }, { id: 'rosa', nome: 'Rosinha', lvl: 9 },
+    { id: 'lilas', nome: 'Lilás', lvl: 11 }, { id: 'galaxia', nome: 'Galáxia', lvl: 14 }, { id: 'dourado', nome: 'Dourado', ach: 'vitoria' },
   ],
   // cores do passarinho (funciona como o tom de pele)
   plumagem: [
@@ -68,16 +75,25 @@ export const CATALOGO = {
     { id: 'bigode', nome: 'Bigodão', lvl: 4 }, { id: 'escuros', nome: 'Óculos escuros', lvl: 6 }, { id: 'fone', nome: 'Fone de ouvido', lvl: 8 },
     { id: 'curativo', nome: 'Curativo', lvl: 3 }, { id: 'estrelas', nome: 'Óculos estrela', ach: 'longa' },
     { id: 'monoculo', nome: 'Monóculo', ach: 'exclusivas' },
+    { id: 'sininho', nome: 'Coleira com sininho' }, { id: 'flor', nome: 'Florzinha' }, { id: 'gravata', nome: 'Gravata-borboleta', lvl: 2 },
+    { id: 'bochechas', nome: 'Bochechas de coração', lvl: 3 }, { id: 'cachecol', nome: 'Cachecol', lvl: 4 },
+    { id: 'perolas', nome: 'Colar de pérolas', lvl: 5 }, { id: 'osso', nome: 'Ossinho', lvl: 6 }, { id: 'tapaolho', nome: 'Tapa-olho pirata', lvl: 7 },
+    { id: 'medalha', nome: 'Medalha de ouro', ach: 'vitoria' },
   ],
   fundo: [
     { id: 'lilas', nome: 'Lilás', cor: '#e9e2ff' }, { id: 'menta', nome: 'Menta', cor: '#d6f7e3' }, { id: 'pessego', nome: 'Pêssego', cor: '#ffe3cf' },
     { id: 'ceu', nome: 'Céu', cor: '#d5efff', lvl: 2 }, { id: 'chiclete', nome: 'Chiclete', cor: '#ffd3e8', lvl: 3 },
     { id: 'sol', nome: 'Sol', cor: '#fff1a8', lvl: 5 }, { id: 'noite', nome: 'Noite', cor: '#2b2a5c', lvl: 11 },
+    { id: 'patinhas', nome: 'Patinhas', cor: '#ffe6f1' }, { id: 'bolinhas', nome: 'Bolinhas', cor: '#d9f1ff' },
+    { id: 'nuvens', nome: 'Nuvens', cor: '#bfe6ff', lvl: 2 }, { id: 'listras', nome: 'Listras', cor: '#fff3c4', lvl: 3 },
+    { id: 'coracoes', nome: 'Corações', cor: '#ffdbe7', lvl: 4 }, { id: 'pordosol', nome: 'Pôr do sol', cor: '#ffb27a', lvl: 6 },
+    { id: 'estrelado', nome: 'Céu estrelado', cor: '#26245a', lvl: 8 }, { id: 'arcoiris', nome: 'Arco-íris', cor: '#e8f7ff', lvl: 10 },
+    { id: 'confete', nome: 'Confete', cor: '#fff8ee', ach: 'maratona' },
   ],
 };
 
 export const PARTES = [
-  ['tipo', 'Personagem'], ['plumagem', 'Cor das penas'], ['pele', 'Pele'], ['cabelo', 'Cabelo'], ['corCabelo', 'Cor do cabelo'], ['barba', 'Barba'], ['olhos', 'Olhos'], ['boca', 'Boca'],
+  ['tipo', 'Personagem'], ['plumagem', 'Cor das penas'], ['pelagem', 'Cor do pelo'], ['pele', 'Pele'], ['cabelo', 'Cabelo'], ['corCabelo', 'Cor do cabelo'], ['barba', 'Barba'], ['olhos', 'Olhos'], ['boca', 'Boca'],
   ['roupa', 'Roupa'], ['corRoupa', 'Cor da roupa'], ['chapeu', 'Chapéu'], ['acessorio', 'Acessório'], ['fundo', 'Fundo'],
 ];
 
@@ -86,8 +102,10 @@ export const PARTES_BICHO = ['tipo', 'olhos', 'corRoupa', 'chapeu', 'acessorio',
 // partes que aparecem em cada personagem
 export function partesDe(look) {
   const t = normalizar(look).tipo || 'pessoa';
-  if (t === 'pessoa') return PARTES.filter(([k]) => k !== 'plumagem').map(([k]) => k);
-  return t === 'passaro' ? ['tipo', 'plumagem', ...PARTES_BICHO.slice(1)] : PARTES_BICHO;
+  if (t === 'pessoa') return PARTES.filter(([k]) => k !== 'plumagem' && k !== 'pelagem').map(([k]) => k);
+  if (t === 'passaro') return ['tipo', 'plumagem', ...PARTES_BICHO.slice(1)];
+  if (t === 'gato') return ['tipo', 'pelagem', ...PARTES_BICHO.slice(1)];
+  return PARTES_BICHO;
 }
 // looks antigos guardavam cada pássaro como um personagem separado
 export function normalizar(look = {}) {
@@ -106,7 +124,7 @@ export const CONQUISTAS = {
 export function lookPadrao() {
   const r = a => a.filter(x => !x.lvl && !x.ach)[Math.floor(Math.random() * a.filter(x => !x.lvl && !x.ach).length)].id;
   return {
-    tipo: 'pessoa', barba: 'nada', plumagem: 'sanhaco',
+    tipo: 'pessoa', barba: 'nada', plumagem: 'sanhaco', pelagem: 'laranja',
     pele: r(CATALOGO.pele), cabelo: r(CATALOGO.cabelo), corCabelo: r(CATALOGO.corCabelo), olhos: 'normal', boca: 'sorriso',
     roupa: 'camiseta', corRoupa: r(CATALOGO.corRoupa), chapeu: 'nada', acessorio: 'nada', fundo: r(CATALOGO.fundo),
   };
@@ -134,9 +152,10 @@ export function avatarSVG(look = {}, tam = 64, opts = {}) {
     <clipPath id="${k}c"><circle cx="50" cy="50" r="50"/></clipPath></defs>`);
   if (!opts.semFundo) s.push(`<circle cx="50" cy="50" r="50" fill="${fundo}"/>`);
   s.push(`<g clip-path="url(#${k}c)">`);
+  if (!opts.semFundo) s.push(padraoFundo(L.fundo));
 
   const bicho = ehBicho(L);
-  if (bicho) s.push(desenharBicho(L.tipo === 'passaro' ? L.plumagem : L.tipo, roupa));
+  if (bicho) s.push(desenharBicho(L, roupa));
   else {
   // cabelo de trás
   const atras = {
@@ -194,7 +213,7 @@ export function avatarSVG(look = {}, tam = 64, opts = {}) {
     lenhador: `<path d="M26 44 Q24 86 50 90 Q76 86 74 44 Q68 62 58 59 Q50 56 42 59 Q32 62 26 44Z" fill="${cab}"/>`,
   }[L.barba] || '');
   // boca (ou focinho/bico)
-  if (bicho) s.push(focinho(L.tipo === 'passaro' ? L.plumagem : L.tipo));
+  if (bicho) s.push(focinho(L));
   else s.push({
     sorriso: `<path d="M43 58 Q50 64 57 58" fill="none" stroke="${esc}" stroke-width="2.4" stroke-linecap="round"/>`,
     risada: `<path d="M42 57 Q50 68 58 57 Z" fill="${esc}"/><path d="M45 61 Q50 64 55 61" fill="#ff7e9e"/>`,
@@ -236,6 +255,15 @@ export function avatarSVG(look = {}, tam = 64, opts = {}) {
     curativo: `<g transform="rotate(-30 64 39)"><rect x="57" y="36" width="14" height="6" rx="3" fill="#f7c59f"/><rect x="62" y="36" width="4" height="6" fill="#e9a978"/></g>`,
     estrelas: [41, 59].map(x => `<path transform="translate(${x} 48) scale(1)" d="M0 -9 L2.6 -3 9 -2.8 4 1.6 5.6 8 0 4.4 -5.6 8 -4 1.6 -9 -2.8 -2.6 -3Z" fill="rgba(255,196,0,.55)" stroke="#ff5fa2" stroke-width="1.6"/>`).join('') + `<path d="M48 47 H52" stroke="#ff5fa2" stroke-width="2"/>`,
     monoculo: `<circle cx="59" cy="48" r="6.5" fill="rgba(255,255,255,.25)" stroke="#d4a017" stroke-width="2"/><path d="M65 50 Q68 62 64 72" fill="none" stroke="#d4a017" stroke-width="1"/>`,
+    sininho: `<path d="M30 71 Q50 81 70 71" fill="none" stroke="#e8455b" stroke-width="5" stroke-linecap="round"/><circle cx="50" cy="80" r="4.6" fill="#ffc83d" stroke="#c99a12" stroke-width="1"/><path d="M47 81 H53" stroke="#8a6a00" stroke-width="1.2"/><circle cx="50" cy="83" r="1" fill="#8a6a00"/>`,
+    flor: `<g transform="translate(69 28)">${[0, 72, 144, 216, 288].map(a => `<ellipse cx="0" cy="-5" rx="3.6" ry="5" transform="rotate(${a})" fill="#ff8fbf"/>`).join('')}<circle r="3.2" fill="#ffd23f"/></g>`,
+    gravata: `<g transform="translate(50 76)"><path d="M0 0 L-11 -6 L-11 6Z M0 0 L11 -6 L11 6Z" fill="${roupa}" stroke="rgba(0,0,0,.25)" stroke-width="1"/><rect x="-3" y="-3.5" width="6" height="7" rx="2" fill="${roupa}" stroke="rgba(0,0,0,.3)" stroke-width="1"/></g>`,
+    bochechas: [35, 65].map(x => `<path transform="translate(${x} 56) scale(.42)" d="M0 7 C-12 -1 -7 -10 0 -4 C7 -10 12 -1 0 7Z" fill="#ff4f8b"/>`).join(''),
+    cachecol: `<path d="M28 70 Q50 82 72 70 L72 77 Q50 89 28 77Z" fill="${roupa}"/><path d="M60 78 L64 98 L72 96 L67 76Z" fill="${roupa}"/><g stroke="#fff" stroke-width="2" opacity=".7"><path d="M36 74 L36 81"/><path d="M50 77 L50 84"/><path d="M64 74 L64 81"/><path d="M62 88 L69 87"/></g>`,
+    perolas: `<g fill="#fffaf2" stroke="#d9cbb7" stroke-width=".6">${Array.from({ length: 11 }, (_, i) => { const a = Math.PI * (0.12 + 0.76 * i / 10); return `<circle cx="${(50 - 21 * Math.cos(a)).toFixed(1)}" cy="${(69 + 9 * Math.sin(a)).toFixed(1)}" r="2.3"/>`; }).join('')}</g>`,
+    osso: `<g transform="translate(50 62) rotate(-8)"><rect x="-11" y="-2.2" width="22" height="4.4" rx="2" fill="#fbf4e4" stroke="#d9cbb7" stroke-width=".8"/>${[-11, 11].map(x => `<circle cx="${x}" cy="-2.6" r="3" fill="#fbf4e4" stroke="#d9cbb7" stroke-width=".8"/><circle cx="${x}" cy="2.6" r="3" fill="#fbf4e4" stroke="#d9cbb7" stroke-width=".8"/>`).join('')}</g>`,
+    tapaolho: `<path d="M27 38 L73 54" stroke="#26263a" stroke-width="1.8"/><ellipse cx="59" cy="48.5" rx="7" ry="6.2" fill="#26263a"/><path d="M57 46 L61 46" stroke="#fff" stroke-width="1" opacity=".5"/>`,
+    medalha: `<path d="M40 68 L50 84 L60 68" fill="none" stroke="#36b6ff" stroke-width="4"/><circle cx="50" cy="86" r="6" fill="#ffc83d" stroke="#c99a12" stroke-width="1.4"/><path d="M50 82.5 l1.2 2.5 2.7.3-2 1.8.6 2.7-2.5-1.4-2.5 1.4.6-2.7-2-1.8 2.7-.3z" fill="#fff6c4"/>`,
   }[L.acessorio] || '');
 
   // chapéu
@@ -254,7 +282,7 @@ export function avatarSVG(look = {}, tam = 64, opts = {}) {
   s.push('</g>');
   return `<svg class="boneco" viewBox="0 0 100 100" width="${tam}" height="${tam}" role="img" aria-label="avatar">${s.join('')}</svg>`;
 }
-const BASE = { tipo: 'pessoa', barba: 'nada', plumagem: 'sanhaco', pele: 'p2', cabelo: 'curto', corCabelo: 'castanho', olhos: 'normal', boca: 'sorriso', roupa: 'camiseta', corRoupa: 'azul', chapeu: 'nada', acessorio: 'nada', fundo: 'lilas' };
+const BASE = { tipo: 'pessoa', barba: 'nada', plumagem: 'sanhaco', pelagem: 'laranja', pele: 'p2', cabelo: 'curto', corCabelo: 'castanho', olhos: 'normal', boca: 'sorriso', roupa: 'camiseta', corRoupa: 'azul', chapeu: 'nada', acessorio: 'nada', fundo: 'lilas' };
 
 // ---------- níveis ----------
 // Nível n precisa de 50·n·(n−1) de XP: 2→100, 3→300, 4→600, 5→1000...
@@ -278,14 +306,71 @@ export function itensNovos(antes, depois) {
 
 // ---------- bichinhos ----------
 const ESC = '#2b1d5c';
-const lenco = cor => `<path d="M33 73 L67 73 L50 91 Z" fill="${cor}"/><path d="M33 73 L67 73" stroke="rgba(0,0,0,.18)" stroke-width="2"/>`;
+const lenco = cor => cor === 'none' ? '' : `<path d="M33 73 L67 73 L50 91 Z" fill="${cor}"/><path d="M33 73 L67 73" stroke="rgba(0,0,0,.18)" stroke-width="2"/>`;
 const AVES = {
   sanhaco: { cabeca: '#a9bfd0', corpo: '#9db4c6', asa: '#4f8fb8', barriga: '#c9d7e2' },
   maritaca: { cabeca: '#5bbd4a', corpo: '#4caf50', asa: '#2e8b3e', barriga: '#93d66e', anel: '#f3efe0' },
   sabia: { cabeca: '#8b7860', corpo: '#8b7860', asa: '#6e5c47', barriga: '#e08a3c', anel: '#f2c14e' },
 };
 
-function desenharBicho(tipo, roupa) {
+const NO_PESCOCO = ['sininho', 'gravata', 'cachecol', 'perolas', 'medalha'];
+const GATOS = {
+  laranja: { base: '#f4a259', claro: '#fde3c4' },
+  cinza: { base: '#a3a8b6', claro: '#e6e8ee' },
+  preto: { base: '#2f2b3a', claro: '#4a4558', escuro: true },
+  branco: { base: '#fbfaf7', claro: '#ffffff', borda: '#e4ddd2' },
+  frajola: { base: '#2f2b3a', claro: '#fbfaf7', escuro: true, frajola: true },
+  siames: { base: '#f3e6d2', claro: '#fbf3e6', orelha: '#5a4033', mascara: '#6f513f' },
+  rajado: { base: '#c9a27a', claro: '#f1e2cf', listras: '#7d5b3d' },
+  tricolor: { base: '#fbfaf7', claro: '#ffffff', borda: '#e4ddd2', manchas: true },
+  rosa: { base: '#ffb3d1', claro: '#ffe3ef' },
+  lilas: { base: '#c4b0ff', claro: '#ece5ff' },
+  galaxia: { base: '#26305e', claro: '#3d4a8a', escuro: true, estrelas: true },
+  dourado: { base: '#e8b923', claro: '#fff1b3', brilho: true },
+};
+
+function desenharGato(L, roupa) {
+  const g = GATOS[L.pelagem] || GATOS.laranja;
+  const ln = NO_PESCOCO.includes(L.acessorio) ? '' : lenco(roupa);
+  const borda = g.borda ? ` stroke="${g.borda}" stroke-width="1.2"` : '';
+  const orelhaE = g.manchas ? '#f0a050' : (g.orelha || g.base), orelhaD = g.manchas ? '#3a3340' : (g.orelha || g.base);
+  return `<path d="M74 99 Q97 88 89 64" fill="none" stroke="${g.base}" stroke-width="7" stroke-linecap="round"/>
+    <path d="M20 100 Q22 74 50 72 Q78 74 80 100Z" fill="${g.base}"${borda}/>
+    <ellipse cx="50" cy="97" rx="13" ry="16" fill="${g.claro}"/>
+    ${ln}
+    <path d="M28 41 L26 11 L47 27Z" fill="${orelhaE}"${borda}/><path d="M72 41 L74 11 L53 27Z" fill="${orelhaD}"${borda}/>
+    <path d="M31 34 L30 18 L42 27Z M69 34 L70 18 L58 27Z" fill="#ff9ac8"/>
+    <ellipse cx="50" cy="47" rx="24" ry="22" fill="${g.base}"${borda}/>
+    ${g.manchas ? `<path d="M29 33 Q39 26 46 33 Q41 45 29 43Z" fill="#f0a050"/><path d="M57 28 Q69 26 73 37 Q65 42 57 36Z" fill="#3a3340"/>` : ''}
+    ${g.frajola ? `<path d="M50 33 Q44 45 37 55 Q50 72 63 55 Q56 45 50 33Z" fill="${g.claro}"/>` : ''}
+    ${g.mascara ? `<ellipse cx="50" cy="55" rx="14" ry="11.5" fill="${g.mascara}" opacity=".85"/>` : ''}
+    ${g.listras ? `<g stroke="${g.listras}" stroke-width="2.6" stroke-linecap="round" fill="none"><path d="M44 27 L45 34"/><path d="M50 26 L50 34"/><path d="M56 27 L55 34"/><path d="M27 47 L33 48.5"/><path d="M27 53 L33 52.5"/><path d="M73 47 L67 48.5"/><path d="M73 53 L67 52.5"/></g>` : ''}
+    ${!g.frajola && !g.mascara ? `<ellipse cx="50" cy="57" rx="10.5" ry="7.5" fill="${g.claro}"/>` : ''}
+    ${g.estrelas ? `<g fill="#fff">${[[36, 34, 1], [62, 30, 1.3], [44, 64, .8], [30, 88, 1.1], [66, 90, .9], [57, 80, .7], [70, 45, .8]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`).join('')}</g><path d="M38 80 l1 2.4 2.5.3-1.9 1.6.6 2.5-2.2-1.3-2.2 1.3.6-2.5-1.9-1.6 2.5-.3z" fill="#ffd23f"/>` : ''}
+    ${g.brilho ? `<g fill="#fff" opacity=".85"><path d="M34 30 l1 3 3 1-3 1-1 3-1-3-3-1 3-1z"/><path d="M68 84 l1 3 3 1-3 1-1 3-1-3-3-1 3-1z"/></g>` : ''}
+    ${g.escuro ? `<circle cx="41" cy="48" r="6" fill="#ffe27a"/><circle cx="59" cy="48" r="6" fill="#ffe27a"/>` : ''}`;
+}
+
+function desenharMaltes(L, roupa) {
+  const c = '#fbf8f2', sombra = '#e6dccd';
+  const ln = NO_PESCOCO.includes(L.acessorio) ? '' : lenco(roupa);
+  return `<path d="M15 100 Q17 71 50 69 Q83 71 85 100Z" fill="${c}" stroke="${sombra}" stroke-width="1.2"/>
+    <g fill="${c}">${[[22, 84], [30, 76], [70, 76], [78, 84]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="6"/>`).join('')}</g>
+    ${ln}
+    <g fill="${c}" stroke="${sombra}" stroke-width="1.2">${[[36, 27], [50, 22], [64, 27]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="9"/>`).join('')}</g>
+    <circle cx="50" cy="47" r="23" fill="${c}"/>
+    <g fill="${c}">${[[36, 27], [50, 23], [64, 27]].map(([x, y]) => `<circle cx="${x}" cy="${y + 2}" r="8"/>`).join('')}</g>
+    <path d="M31 32 Q17 37 19 60 Q19 81 30 86 Q39 77 36 59 Q35 41 31 32Z" fill="${c}" stroke="${sombra}" stroke-width="1.4"/>
+    <path d="M69 32 Q83 37 81 60 Q81 81 70 86 Q61 77 64 59 Q65 41 69 32Z" fill="${c}" stroke="${sombra}" stroke-width="1.4"/>
+    <g fill="none" stroke="${sombra}" stroke-width="1.2" stroke-linecap="round"><path d="M25 48 Q23 63 27 77"/><path d="M75 48 Q77 63 73 77"/><path d="M30 52 Q29 64 31 74"/><path d="M70 52 Q71 64 69 74"/></g>
+    ${L.chapeu === 'nada' ? `<path d="M46 25 Q48 11 50 9 Q52 11 54 25Z" fill="${c}" stroke="${sombra}" stroke-width="1"/><g transform="translate(50 19)"><path d="M0 0 L-8 -5 L-8 5Z M0 0 L8 -5 L8 5Z" fill="#ff7eb6"/><circle r="2.4" fill="#ff5fa2"/></g>` : ''}`;
+}
+
+function desenharBicho(L, roupa) {
+  const tipo = L.tipo === 'passaro' ? L.plumagem : L.tipo;
+  if (tipo === 'gato') return desenharGato(L, roupa);
+  if (tipo === 'maltes') return desenharMaltes(L, roupa);
+  if (NO_PESCOCO.includes(L.acessorio)) roupa = 'none';
   if (tipo === 'caramelo') {
     const c = '#d99a4e', claro = '#f6d7a7', esc = '#a8682c';
     return `<path d="M18 100 Q20 74 50 72 Q80 74 82 100 Z" fill="${c}"/><ellipse cx="50" cy="96" rx="14" ry="14" fill="${claro}"/>
@@ -318,7 +403,16 @@ function desenharBicho(tipo, roupa) {
     ${a.anel ? `<circle cx="41" cy="48" r="6.4" fill="${a.anel}"/><circle cx="59" cy="48" r="6.4" fill="${a.anel}"/>` : ''}`;
 }
 
-function focinho(tipo) {
+function focinho(L) {
+  const tipo = L.tipo === 'passaro' ? L.plumagem : L.tipo;
+  if (tipo === 'gato') {
+    const g = GATOS[L.pelagem] || GATOS.laranja, linha = g.escuro && !g.frajola ? '#ece6f7' : ESC;
+    return `<path d="M47.3 52.6 L52.7 52.6 L50 55.8Z" fill="#ff8fb1"/>
+      <path d="M45.5 57.6 Q48 60.2 50 56.6 Q52 60.2 54.5 57.6" fill="none" stroke="${linha}" stroke-width="1.5" stroke-linecap="round"/>
+      <g stroke="${linha}" stroke-width="1" stroke-linecap="round" opacity=".7"><path d="M39 55 L23 51.5"/><path d="M39 57.5 L23 59"/><path d="M61 55 L77 51.5"/><path d="M61 57.5 L77 59"/></g>`;
+  }
+  if (tipo === 'maltes') return `<ellipse cx="50" cy="57" rx="10.5" ry="8" fill="#fffefb"/><ellipse cx="50" cy="53.4" rx="4" ry="3" fill="#1e1a26"/>
+    <path d="M45.8 58.6 Q48 61.4 50 58.6 Q52 61.4 54.2 58.6" fill="none" stroke="${ESC}" stroke-width="1.5" stroke-linecap="round"/><path d="M48.5 60.4 Q50 65 51.5 60.4Z" fill="#ff7e9e"/>`;
   if (tipo === 'caramelo') return `<ellipse cx="50" cy="58" rx="11.5" ry="8.5" fill="#f6d7a7"/><ellipse cx="50" cy="53.5" rx="4.4" ry="3.2" fill="${ESC}"/>
     <path d="M45.5 59 Q48 62 50 59 Q52 62 54.5 59" fill="none" stroke="${ESC}" stroke-width="1.6" stroke-linecap="round"/><path d="M48.3 61 Q50 66.5 51.7 61Z" fill="#ff6f8e"/>`;
   if (tipo === 'morcego') return `<path d="M47.5 53 Q50 55.5 52.5 53" fill="none" stroke="${ESC}" stroke-width="1.6" stroke-linecap="round"/>
@@ -326,4 +420,22 @@ function focinho(tipo) {
   if (tipo === 'maritaca') return `<path d="M43.5 53 Q50 49.5 56.5 53 Q56 61.5 50 65 Q48.5 59 43.5 53Z" fill="#efe2c4" stroke="#b9a77f" stroke-width="1"/>`;
   if (tipo === 'sabia') return `<path d="M45 54 L55 54 L50 63.5Z" fill="#e8b730"/><path d="M45 54 L55 54" stroke="#b8860b" stroke-width="1"/>`;
   return `<path d="M45 54 L55 54 L50 62.5Z" fill="#5d6670"/>`;
+}
+
+// ---------- fundos com desenho ----------
+const pata = (x, y, esc, rot, cor) => `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${esc})" fill="${cor}"><ellipse cx="0" cy="3" rx="4" ry="3.4"/><circle cx="-4.2" cy="-2.4" r="1.7"/><circle cx="-1.4" cy="-4.8" r="1.7"/><circle cx="1.4" cy="-4.8" r="1.7"/><circle cx="4.2" cy="-2.4" r="1.7"/></g>`;
+const coracao = (x, y, e, cor) => `<path transform="translate(${x} ${y}) scale(${e})" d="M0 7 C-12 -1 -7 -10 0 -4 C7 -10 12 -1 0 7Z" fill="${cor}"/>`;
+function padraoFundo(id) {
+  switch (id) {
+    case 'patinhas': return [[18, 22, .9, -20], [80, 18, .8, 25], [12, 58, .8, 10], [88, 55, .9, -15], [30, 8, .6, 30], [70, 6, .6, -30]].map(([x, y, e, r]) => pata(x, y, e, r, '#ffb3d1')).join('');
+    case 'bolinhas': return `<g fill="#fff" opacity=".85">${[[12, 15], [30, 6], [50, 12], [70, 6], [88, 16], [8, 40], [92, 40], [20, 30], [80, 30], [6, 65], [94, 65]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="4"/>`).join('')}</g>`;
+    case 'nuvens': return `<g fill="#fff">${[[20, 22], [78, 14], [86, 52], [10, 56]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="6"/><circle cx="${x + 7}" cy="${y - 3}" r="7"/><circle cx="${x + 14}" cy="${y}" r="5.5"/><rect x="${x}" y="${y}" width="14" height="5.5"/>`).join('')}</g>`;
+    case 'listras': return `<g stroke="#ffd36b" stroke-width="7">${[-40, -20, 0, 20, 40, 60, 80, 100, 120].map(x => `<path d="M${x} 0 L${x + 60} 100"/>`).join('')}</g>`;
+    case 'coracoes': return [[16, 20, .9], [82, 16, .8], [10, 52, .7], [90, 50, .9], [36, 6, .55], [64, 6, .6]].map(([x, y, e]) => coracao(x, y, e, '#ff8fb1')).join('');
+    case 'pordosol': return `<rect width="100" height="100" fill="#ffb27a"/><rect y="0" width="100" height="34" fill="#ff8fa3"/><rect y="34" width="100" height="18" fill="#ffa07a"/><circle cx="50" cy="66" r="26" fill="#ffd56b" opacity=".85"/>`;
+    case 'estrelado': return `<g fill="#fff">${[[12, 18, 1.2], [26, 8, .8], [44, 14, 1], [62, 6, 1.3], [80, 14, .9], [90, 30, 1.1], [8, 40, .9], [92, 52, .8], [16, 62, 1], [86, 70, 1.2]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`).join('')}</g><path d="M74 26 a7 7 0 1 0 6 -9 a5.5 5.5 0 1 1 -6 9z" fill="#ffe27a"/>`;
+    case 'arcoiris': return `<g fill="none" stroke-width="6">${['#ff5fa2', '#ff9f43', '#ffd23f', '#2fd47a', '#36b6ff', '#8f6bff'].map((c, i) => `<circle cx="50" cy="70" r="${54 - i * 6}" stroke="${c}"/>`).join('')}</g>`;
+    case 'confete': return [[12, 20, '#ff5fa2', 20], [26, 8, '#36b6ff', -30], [44, 14, '#ffd23f', 45], [64, 8, '#2fd47a', 10], [82, 18, '#8f6bff', -20], [90, 40, '#ff9f43', 60], [8, 44, '#2fd47a', -50], [14, 66, '#ffd23f', 30], [88, 64, '#ff5fa2', -10]].map(([x, y, c, r]) => `<rect x="${x}" y="${y}" width="6" height="3" rx="1" fill="${c}" transform="rotate(${r} ${x + 3} ${y + 1.5})"/>`).join('');
+    default: return '';
+  }
 }
