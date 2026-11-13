@@ -158,6 +158,7 @@ export function sfx(kind, n = 0) {
       [0.25, 0.7, 1.1].forEach(d => note(sfxBus, 100, t + d, 0.09, { type: 'sine', vol: 0.07, glide: 5 })); break;
     case 'poder': [72, 68, 65, 60].forEach((m, i) => note(sfxBus, m, t + i * 0.11, 0.2, { type: 'square', vol: 0.1, cutoff: 2000 }));
       note(sfxBus, 48, t + 0.44, 0.4, { type: 'sawtooth', vol: 0.1, cutoff: 900 }); break;
+    case 'moeda': note(sfxBus, 88 + (n % 3) * 2, t, 0.07, { type: 'square', vol: 0.07, cutoff: 4000 }); note(sfxBus, 95 + (n % 3) * 2, t + 0.06, 0.16, { type: 'square', vol: 0.07, cutoff: 4000 }); break;
     case 'join':note(sfxBus, 76, t, 0.1, { type: 'sine', vol: 0.2 }); note(sfxBus, 83, t + 0.08, 0.14, { type: 'sine', vol: 0.2 }); break;
   }
 }

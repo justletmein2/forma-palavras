@@ -734,18 +734,74 @@ function grito(w) {
   return lista[h % lista.length];
 }
 
-// Miniatura do quadro com o caminho da palavra destacado (letras acendem na ordem)
-function miniQuadro(w) {
-  if (!S.grid) return '';
+// Miniatura do quadro FORA do card: montada uma vez por recapitulação; a cada palavra
+// só trocam as letras acesas e o traço (o quadro em si não se mexe)
+function montarMini() {
+  const el = $('recapMini');
+  el.innerHTML = `<div class="mini-quadro" aria-hidden="true">${[...S.grid].map(ch => `<span class="mq">${esc(ch)}</span>`).join('')}
+    <svg viewBox="0 0 600 600"><path pathLength="1" d=""/></svg></div>`;
+  el.hidden = true;
+}
+function mostrarMini(w) {
+  const el = $('recapMini');
+  if (!w || !S.grid) { el.hidden = true; return; }
+  el.hidden = false;
   const cam = caminhoDe(w, S.grid) || [];
-  const ordem = new Map(cam.map((i, k) => [i, k]));
   const atraso = Math.min(110, 700 / Math.max(cam.length, 1));
-  const celulas = [...S.grid].map((ch, i) => ordem.has(i)
-    ? `<span class="mq on${ordem.get(i) === 0 ? ' ini' : ''}" style="--d:${Math.round(ordem.get(i) * atraso)}ms">${esc(ch)}</span>`
-    : `<span class="mq">${esc(ch)}</span>`).join('');
-  const d = cam.map((i, k) => `${k ? 'L' : 'M'}${(i % 6) * 100 + 50} ${Math.floor(i / 6) * 100 + 50}`).join(' ');
-  return `<div class="mini-quadro" aria-hidden="true">${celulas}
-    ${cam.length > 1 ? `<svg viewBox="0 0 600 600"><path d="${d}" pathLength="1" style="--t:${Math.round(cam.length * atraso)}ms"/></svg>` : ''}</div>`;
+  const cel = el.querySelectorAll('.mq');
+  cel.forEach(c => { c.className = 'mq'; c.style.removeProperty('--d'); });
+  void el.offsetWidth; // reinicia as animações
+  cam.forEach((i, k) => { cel[i].className = 'mq on' + (k === 0 ? ' ini' : ''); cel[i].style.setProperty('--d', Math.round(k * atraso) + 'ms'); });
+  const velho = el.querySelector('path'), novo = velho.cloneNode();
+  novo.setAttribute('d', cam.map((i, k) => `${k ? 'L' : 'M'}${(i % 6) * 100 + 50} ${Math.floor(i / 6) * 100 + 50}`).join(' '));
+  novo.style.setProperty('--t', Math.round(cam.length * atraso) + 'ms');
+  velho.replaceWith(novo);
+}
+
+// Placar da recapitulação: bonequinhos com os pontos crescendo
+function montarPlacarRecap() {
+  const js = Object.values(S.recapJog).sort((a, b) => a.name.localeCompare(b.name, 'pt'));
+  $('recapPlacar').innerHTML = js.map(j => `<span class="pl-jog" data-id="${esc(j.id)}">
+    <span class="pl-av">${avatarSVG(j.look, 34)}</span><span class="pl-nome">${esc(j.name)}</span><b class="pl-pts">0</b></span>`).join('');
+}
+function atualizarPlacarRecap(totais, quemPula = []) {
+  if (!totais) return;
+  $('recapPlacar').querySelectorAll('.pl-jog').forEach(el => {
+    const id = el.dataset.id, b = el.querySelector('.pl-pts');
+    if (b.textContent !== String(totais[id] || 0)) b.textContent = totais[id] || 0;
+    if (quemPula.includes(id)) { el.classList.remove('pulou'); void el.offsetWidth; el.classList.add('pulou'); }
+  });
+}
+// "+N" sai do card e voa até o bonequinho de quem achou a palavra
+function voarPontos(p) {
+  const vel = ctlRecap().vel || 1, real = p.dur / vel;
+  const atraso = Math.min(750, real * 0.35), dur = Math.min(650, real * 0.4);
+  const passo = S.passoAtual;
+  setTimeout(() => {
+    if (S.passoAtual !== passo || S.fase !== 'recap') return;
+    const origem = document.querySelector('#recapPalco .valor');
+    if (!origem) return;
+    const o = origem.getBoundingClientRect(), ox = o.left + o.width / 2, oy = o.top + o.height / 2;
+    origem.classList.add('foi');
+    p.quem.forEach((id, k) => {
+      const alvo = document.querySelector(`#recapPlacar .pl-jog[data-id="${CSS.escape(id)}"] .pl-av`);
+      if (!alvo) return;
+      const a = alvo.getBoundingClientRect(), dx = a.left + a.width / 2 - ox, dy = a.top + a.height / 2 - oy;
+      const v = document.createElement('div');
+      v.className = 'voo-pontos' + (p.excl ? ' excl' : '');
+      v.textContent = '+' + p.pts;
+      v.style.left = ox + 'px'; v.style.top = oy + 'px';
+      document.body.appendChild(v);
+      const fim = () => { v.remove(); if (S.passoAtual === passo) { atualizarPlacarRecap({ ...p.antes, ...Object.fromEntries(p.quem.slice(0, k + 1).map(i => [i, p.depois[i]])) }, [id]); som.sfx('moeda', k); } };
+      if (!v.animate) { fim(); return; }
+      const an = v.animate([
+        { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
+        { transform: `translate(calc(-50% + ${dx * 0.45}px), calc(-50% + ${dy * 0.45 - 30}px)) scale(1.35)`, opacity: 1, offset: 0.4 },
+        { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.45)`, opacity: 0.7 },
+      ], { duration: dur, easing: 'ease-in', delay: k * 60 });
+      an.onfinish = fim;
+    });
+  }, atraso);
 }
 
 // tamanho da letra para a palavra caber numa linha só
@@ -757,7 +813,7 @@ function comecarRecap() {
   S.recap = montarRecap(js, maiorPossivel());
   S.passoAtual = -1;
   S.fase = 'recap';
-  montarReacoes();
+  montarReacoes(); montarMini(); montarPlacarRecap();
   // XP e desbloqueios
   const eu = S.modo === 'online' ? net.meuId() : 'eu';
   const chave = `${S.code || 'solo'}:${S.round}:${S.startAt}`;
@@ -827,7 +883,7 @@ function soltarEmoji(e, nome) {
   d.style.setProperty('--gira', (Math.random() * 40 - 20).toFixed(0) + 'deg');
   d.innerHTML = `<span>${e}</span>${nome ? `<small>${esc(nome)}</small>` : ''}`;
   document.body.appendChild(d);
-  setTimeout(() => d.remove(), 900);
+  setTimeout(() => d.remove(), 1100);
 }
 
 function cartaoJogador(id, tam = 56) {
@@ -837,6 +893,10 @@ function cartaoJogador(id, tam = 56) {
 
 function desenharPasso(p) {
   const palco = $('recapPalco');
+  // no ranking o placar some (a ordem final é revelada lá)
+  $('recapPlacar').hidden = p.secao === 'Ranking' || p.t === 'campeao';
+  atualizarPlacarRecap(p.antes);
+  mostrarMini(p.t === 'palavra' || p.t === 'maior' ? p.w : null);
   $('recapSecao').textContent = p.t === 'titulo' ? '' : (p.secao || '');
   $('recapProg').textContent = p.t === 'palavra' ? `${p.n} de ${p.de}` : '';
   let html = '';
@@ -848,18 +908,17 @@ function desenharPasso(p) {
     html = `<div class="rc ${p.excl ? 'exclusiva' : ''}">
       ${p.excl ? '<span class="selo">⭐ EXCLUSIVA · VALE DOBRADO</span>' : ''}
       <div class="palavra-grande" ${tamPalavra(p.w)}>${esc(exibir(p.w).toUpperCase())}</div>
-      ${miniQuadro(p.w)}
       <span class="valor">+${p.pts}${p.excl ? ` <small>(${p.base}×2)</small>` : ''}</span>
       <div class="quem">${nomes}</div>
       ${grito(p.w) ? `<span class="grito g${Math.min(p.w.length, 9)}">${grito(p.w)}</span>` : ''}</div>`;
     som.sfx(p.excl ? 'brilho' : 'reveal', p.w.length - 3);
     if (p.w.length >= 7) setTimeout(() => som.sfx('big'), 180);
+    setTimeout(() => voarPontos(p));
   } else if (p.t === 'maior') {
     html = `<div class="rc maior">
       <span class="selo">🔍 CURIOSIDADE</span>
       <p class="maior-txt">A maior palavra que dava pra formar era</p>
       <div class="palavra-grande" ${tamPalavra(p.w)}>${esc(exibir(p.w).toUpperCase())}</div>
-      ${miniQuadro(p.w)}
       <span class="valor">${p.w.length} letras</span>
       ${p.quem.length
         ? `<p class="maior-txt">🎉 E foi achada por:</p><div class="quem">${p.quem.map(id => cartaoJogador(id, 56)).join('')}</div>`
@@ -874,7 +933,7 @@ function desenharPasso(p) {
       <div class="placar-grande">${p.score} pontos</div></div>`;
     som.sfx('count', p.pos === 2 ? 1 : 0);
   } else if (p.t === 'suspense') {
-    html = `<div class="rc titulo suspense"><div class="tambor">🥁</div><h2>E quem venceu foi…</h2></div>`;
+    html = `<div class="rc titulo suspense"><div class="tambor">🥁</div><h2>${p.pos === 1 ? 'E quem venceu foi…' : `E em ${p.pos}º lugar…`}</h2></div>`;
     som.sfx('rufar');
   } else if (p.t === 'campeao') {
     const nomes = p.ids.map(id => S.recapJog[id].name);

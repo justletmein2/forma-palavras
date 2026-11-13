@@ -55,14 +55,23 @@ export function montarRecap(jogadores, maior = null) {
     add({ t: 'titulo', h: '🏆 E o ranking fica…', p: '', dur: 2200, som: 'whoosh', secao: 'Ranking' });
     outros.forEach((r, i) => {
       const pos = lugar(r.score), ultimoAntes = i === outros.length - 1;
-      add({ t: 'rank', id: r.id, score: r.score, pos, dur: ultimoAntes ? 3000 : 2000, secao: 'Ranking' });
+      // o tambor rufa antes do 2º lugar: quando ele aparece, todo mundo já sabe quem venceu
+      if (ultimoAntes) add({ t: 'suspense', pos, dur: 2600, secao: 'Ranking' });
+      add({ t: 'rank', id: r.id, score: r.score, pos, dur: ultimoAntes ? 3200 : 2000, secao: 'Ranking' });
     });
-    add({ t: 'suspense', dur: 2600, secao: 'Ranking' });
+    if (!outros.length) add({ t: 'suspense', pos: 1, dur: 2600, secao: 'Ranking' }); // todo mundo empatado
   }
   add({ t: 'campeao', ids: vencedores.map(v => v.id), score: topo, varios, dur: 7000, secao: varios ? 'Ranking' : 'Fim' });
 
   let acc = 0;
   for (const p of passos) { p.ini = acc; acc += p.dur; }
+  // placar que vai crescendo: pontos de cada um antes e depois de cada passo
+  const acum = Object.fromEntries(jogadores.map(j => [j.id, 0]));
+  for (const p of passos) {
+    p.antes = { ...acum };
+    if (p.t === 'palavra') p.quem.forEach(id => { acum[id] += p.pts; });
+    p.depois = { ...acum };
+  }
   return { passos, total: acc, inicioRanking, final, nExcl, quem, vencedores: vencedores.map(v => v.id) };
 }
 
