@@ -157,10 +157,33 @@ async function depoisDeEntrar(onde) {
   else { if (P.tag) await net.reservarTag(P.tag); await guardar(); toast('Pronto! Seu progresso fica salvo ' + onde); }
 }
 
+// O Google bloqueia login dentro de navegadores embutidos (WhatsApp, Instagram, Facebook...)
+const UA = navigator.userAgent || '';
+const IOS = /iPhone|iPad|iPod/i.test(UA);
+const EMBUTIDO = !navigator.standalone && (/FBAN|FBAV|FB_IAB|Instagram|WhatsApp|Line\/|LinkedInApp|Snapchat|TikTok|musical_ly|Telegram|; wv\)|GSA\//i.test(UA)
+  || (IOS && !/Safari\//.test(UA) && !/CriOS|FxiOS|EdgiOS/.test(UA)));
+function avisoNavegador() {
+  const url = location.href;
+  $('avisoNavTxt').innerHTML = IOS
+    ? 'O Google não deixa entrar por dentro deste app. Toque em <b>•••</b> ou no ícone de compartilhar e escolha <b>Abrir no Safari</b>. Depois é só entrar com Google lá.'
+    : 'O Google não deixa entrar por dentro deste app. Abra o jogo no Chrome e entre com Google lá.';
+  $('btnAbrirChrome').hidden = IOS;
+  $('btnAbrirChrome').onclick = () => { location.href = `intent://${location.host}${location.pathname}${location.search}#Intent;scheme=https;package=com.android.chrome;end`; };
+  $('btnCopiarLink').onclick = async () => {
+    try { await navigator.clipboard.writeText(url); toast('Link copiado! Cole no navegador 👍'); }
+    catch { toast(url); }
+  };
+  $('btnUsarEmail').onclick = () => { $('avisoNav').hidden = true; $('formEmail').hidden = false; $('emailLogin').focus(); };
+  $('avisoNav').hidden = false;
+}
+$('btnFecharAviso').onclick = () => { $('avisoNav').hidden = true; };
+
 async function entrarGoogle() {
+  if (EMBUTIDO) { avisoNavegador(); return; }
   try { await net.loginGoogle(); await depoisDeEntrar('na conta Google'); }
   catch (e) {
-    if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') toast('Não deu pra entrar: ' + (e.message || e));
+    if (['auth/popup-blocked', 'auth/operation-not-supported-in-this-environment', 'auth/web-storage-unsupported'].includes(e.code)) avisoNavegador();
+    else if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') toast('Não deu pra entrar: ' + (e.message || e));
   }
   desenharInicio();
 }
@@ -1062,4 +1085,4 @@ sincronizarPerfil().then(voltarPraSala);
 loadDict().catch(() => {});
 
 // modo de teste local: window.__poder('gelo') aplica um poder em mim
-if (net.modoLocal()) window.__poder = tipo => fx.aplicar(tipo);
+if (net.modoLocal()) { window.__poder = tipo => fx.aplicar(tipo); window.__entrarGoogle = entrarGoogle; }
