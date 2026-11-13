@@ -203,7 +203,7 @@ export async function entrar(code, perfil, cb) {
   const atual = await B.get(eu);
   const base = { ...perfil, online: true };
   if (!atual) base.joined = agora();
-  if (!atual || atual.round !== meta.round) Object.assign(base, { round: meta.round || 0, score: 0, count: 0, words: null });
+  if (!atual || atual.round !== meta.round) Object.assign(base, { round: meta.status === 'lobby' ? (meta.round || 0) : -1, score: 0, count: 0, words: null });
   await B.update(eu, base);
   B.aoSair(eu, { online: false });
   const estado = { meta: null, players: {} };
@@ -214,6 +214,7 @@ export async function entrar(code, perfil, cb) {
   return () => { offs.forEach(f => f && f()); B.update(eu, { online: false }); };
 }
 
+export const lerEu = code => B.get(`${sala(code)}/players/${uid}`);
 export const atualizarMeta = (code, dados) => B.update(sala(code) + '/meta', dados);
 export const atualizarEu = (code, dados) => B.update(`${sala(code)}/players/${uid}`, dados);
 export const marcarPalavra = (code, plain, pts, score, count) =>

@@ -613,3 +613,9 @@ html[data-tema="escuro"] { --papel: #262046; --tinta: #f1ecff; --escuro-txt: #2b
 .item .comemora { --orb: 34px; }
 .item .comemora::before, .item .comemora::after { font-size: 16px; }
 .rc .quem .balao-fala { max-width: 170px; white-space: normal; overflow: visible; text-overflow: clip; }
+
+/* espectador */
+.aviso-espectador { background: var(--amarelo); color: #2b1d5c; font-weight: 800; font-size: 15px; text-align: center; border-radius: 14px; padding: 6px 10px; box-shadow: 0 3px 0 rgba(0,0,0,.18); }
+#telaJogo.assistindo .bolha-wrap { display: none; }
+#telaJogo.assistindo .meus-pontos, #telaJogo.assistindo .achadas-wrap { display: none; }
+#telaJogo.assistindo .tabuleiro { filter: saturate(.8); }

@@ -358,6 +358,7 @@ $('btnEntrar').onclick = async () => {
 
 async function entrarNaSala(code) {
   S.modo = 'online'; S.code = code; S.round = -1; S.fase = 'sala';
+  try { sessionStorage.setItem('cp_sala', code); } catch {}
   const q = new URLSearchParams(location.search); q.set('sala', code);
   history.replaceState(null, '', '?' + q);
   $('codigoSala').textContent = code;
@@ -369,6 +370,7 @@ async function entrarNaSala(code) {
 
 function voltarAoInicio() {
   fx.limpar(); fecharEscolha();
+  try { sessionStorage.removeItem('cp_sala'); } catch {}
   if (S.sairSala) S.sairSala();
   Object.assign(S, { sairSala: null, modo: null, code: null, meta: null, players: {}, fase: 'inicio', round: -1, recap: null });
   tab.travar(true); som.setTempo(112);
@@ -409,7 +411,7 @@ function aoMudarSala(estado) {
   verificarHost();
   const m = S.meta;
   if (m.status === 'playing' && m.round !== S.round) {
-    if (net.agora() < m.startAt + m.dur * 1000 - 5000) { iniciarRodada(m); return; }
+    if (net.agora() < m.startAt + m.dur * 1000 - 3000) { iniciarRodada(m); return; }
     S.round = m.round; // chegou com a partida no fim: espera a próxima
   }
   if (m.status === 'lobby' && S.fase !== 'sala') { S.fase = 'sala'; mostrar('telaSala'); }
@@ -550,7 +552,7 @@ function verAtaques() {
 }
 
 function receberPoder(tipo, quem) {
-  if (S.fase !== 'jogando') return;
+  if (S.fase !== 'jogando' || S.espectador) return;
   bolha(`${PODERES[tipo].icone} ${quem} te atrapalhou!`, 'atacado', 2200);
   if (navigator.vibrate) navigator.vibrate([80, 50, 80]);
   fx.aplicar(tipo);
@@ -569,17 +571,42 @@ function novaRodadaSolo() {
   iniciarRodada({ grid: gerarGrade(Date.now()), round: (S.round > 0 ? S.round : 0) + 1, startAt: Date.now() + 3600, dur: DURACAO, family: S.family });
 }
 
+// Quem entra depois de 10 s de partida assiste (e joga a próxima)
+const TOLERANCIA_ENTRADA = 10000;
 async function iniciarRodada(m) {
+  S.round = m.round; // já marca, pra não iniciar duas vezes enquanto lê o banco
+  let salvo = null, espectador = false;
+  if (S.modo === 'online') {
+    salvo = await net.lerEu(S.code).catch(() => null);
+    const voltou = salvo && salvo.round === m.round; // recarregou a página no meio da partida
+    if (!voltou) espectador = net.agora() - m.startAt > TOLERANCIA_ENTRADA;
+    if (!voltou) salvo = null;
+  }
   Object.assign(S, {
     round: m.round, grid: m.grid, startAt: m.startAt, dur: m.dur || DURACAO, family: !!m.family,
     achadas: new Map(), score: 0, fase: 'contagem', ultimaContagem: null, recap: null, passoAtual: -1, ganhos: null,
     possiveis: null, ultimaTentativa: 0, dicaPalavra: null, dicaNivel: 0,
-    atrapalhar: !!m.atrapalhar, ataquesVistos: new Set(), poderVisto: null, concedido: null,
+    atrapalhar: !!m.atrapalhar, ataquesVistos: new Set(), poderVisto: null, concedido: null, espectador,
   });
   fx.limpar(); fecharEscolha();
-  if (S.modo === 'online') net.atualizarEu(S.code, { ...meuPublico(), round: S.round, score: 0, count: 0, words: null, online: true }).catch(() => {});
-  $('meusPontos').textContent = '0';
-  $('achadas').innerHTML = ''; $('qtdAchadas').textContent = '0';
+  $('achadas').innerHTML = '';
+  if (salvo) {
+    // recupera o que já tinha achado
+    for (const [w, pts] of Object.entries(salvo.words || {})) { S.achadas.set(w, pts); S.score += pts; }
+    net.atualizarEu(S.code, { ...meuPublico(), online: true }).catch(() => {});
+    if (!dictReady()) await garantirDicionario();
+    [...S.achadas.keys()].forEach(w => {
+      const chip = document.createElement('span'); chip.className = 'palavra';
+      chip.innerHTML = `${esc(exibir(w))}<sup>+${S.achadas.get(w)}</sup>`; $('achadas').prepend(chip);
+    });
+    toast('Você voltou pra partida! Suas palavras estão salvas 👍');
+  } else if (S.modo === 'online' && !espectador) {
+    net.atualizarEu(S.code, { ...meuPublico(), round: S.round, score: 0, count: 0, words: null, online: true }).catch(() => {});
+  }
+  $('meusPontos').textContent = S.score;
+  $('qtdAchadas').textContent = S.achadas.size;
+  document.getElementById('telaJogo').classList.toggle('assistindo', espectador);
+  $('avisoEspectador').hidden = !espectador;
   limparBolha();
   tab.setGrid(S.grid); tab.travar(true); tab.embaralharVisual();
   $('contagem').hidden = false; $('contagem').textContent = '3';
@@ -664,7 +691,7 @@ function tique() {
     S.ultimaTentativa = t; S.dicaPalavra = null; S.dicaNivel = 0; tab.dica([]);
     const c = $('contagem'); c.textContent = 'JÁ!'; som.sfx('count', 1);
     setTimeout(() => { c.hidden = true; }, 500);
-    tab.travar(false);
+    if (!S.espectador) tab.travar(false);
   }
   if (S.fase === 'jogando') {
     const resta = Math.max(0, S.startAt + S.dur * 1000 - t);
@@ -676,7 +703,7 @@ function tique() {
     if (seg <= 30) som.setTempo(seg <= 10 ? 140 : 126);
     if (acabando && seg !== S.ultimaContagem && seg > 0) { S.ultimaContagem = seg; som.sfx('tick'); }
     if (resta <= 0) { tab.dica([]); acabouTempo(); }
-    else if (!tab.segurando() && t - S.ultimaTentativa > ESPERA_DICA) darDica(t);
+    else if (!S.espectador && !tab.segurando() && t - S.ultimaTentativa > ESPERA_DICA) darDica(t);
     if (S.modo === 'online' && S.atrapalhar) {
       if (souHost()) concederPoder(t);
       if (S.escolha) {
@@ -711,7 +738,7 @@ function dadosDaRodada() {
   const js = jogadoresDaRodada().map(p => ({ id: p.id, name: p.name, look: p.look, palavras: Object.keys(p.words || {}) }));
   const eu = js.find(p => p.id === net.meuId());
   if (eu) eu.palavras = [...new Set([...eu.palavras, ...S.achadas.keys()])];
-  else js.push({ id: net.meuId(), name: P.tag, look: P.look, palavras: [...S.achadas.keys()] });
+  else if (!S.espectador) js.push({ id: net.meuId(), name: P.tag, look: P.look, palavras: [...S.achadas.keys()] });
   return js.sort((a, b) => a.id.localeCompare(b.id));
 }
 
@@ -819,7 +846,7 @@ function comecarRecap() {
   // XP e desbloqueios
   const eu = S.modo === 'online' ? net.meuId() : 'eu';
   const chave = `${S.code || 'solo'}:${S.round}:${S.startAt}`;
-  S.ganhos = darRecompensas(chave, S.recap.final[eu] || 0, S.recap.vencedores.includes(eu), js.length, S.recapJog[eu].palavras, S.recap.nExcl[eu] || 0);
+  S.ganhos = S.espectador || !S.recapJog[eu] ? null : darRecompensas(chave, S.recap.final[eu] || 0, S.recap.vencedores.includes(eu), js.length, S.recapJog[eu].palavras, S.recap.nExcl[eu] || 0);
   mostrar('telaRecap');
 }
 
@@ -1024,7 +1051,14 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && S.
 
 // ---------- partida ----------
 desenharInicio();
-sincronizarPerfil();
+// Recarregou a página estando numa sala? Volta direto pra ela.
+async function voltarPraSala() {
+  let sala = null;
+  try { sala = sessionStorage.getItem('cp_sala'); } catch {}
+  if (!sala || sala !== (params.get('sala') || '').toUpperCase() || !P.tag || !net.onlineDisponivel()) return;
+  try { await net.conectar(); if (await net.salaExiste(sala)) await entrarNaSala(sala); } catch (e) { console.warn(e); }
+}
+sincronizarPerfil().then(voltarPraSala);
 loadDict().catch(() => {});
 
 // modo de teste local: window.__poder('gelo') aplica um poder em mim
