@@ -1,6 +1,6 @@
 import { loadDict, dictReady, lookup, pontos, gerarGrade, resolver, exibir, raridade, semAcento, caminhoDe } from './dict.js';
 import { criarTabuleiro } from './board.js';
-import { avatarSVG, CATALOGO, PARTES, partesDe, normalizar, rotuloCor, CONQUISTAS, lookPadrao, liberado, nivelDe, faixaNivel, itensNovos } from './avatar.js';
+import { avatarSVG, comemoracaoHTML, textoFrase, CATALOGO, PARTES, partesDe, normalizar, rotuloCor, CONQUISTAS, lookPadrao, liberado, nivelDe, faixaNivel, itensNovos } from './avatar.js';
 import { montarRecap, passoEm } from './recap.js';
 import * as som from './audio.js';
 import * as net from './net.js';
@@ -224,7 +224,7 @@ $('btnSalvarTag').onclick = async () => {
 // ---------- editor do boneco ----------
 let rascunho = null, abaAtual = 'tipo';
 function abrirEditor() {
-  rascunho = { tipo: 'pessoa', plumagem: 'sanhaco', pelagem: 'laranja', orelhas: 'medias', corAlien: 'verde', modeloAlien: 'antenas', corRobo: 'prata', modeloRobo: 'quadrado', ...normalizar(P.look) };
+  rascunho = { tipo: 'pessoa', comemora: 'pulinho', frase: 'ganhei', plumagem: 'sanhaco', pelagem: 'laranja', orelhas: 'medias', corAlien: 'verde', modeloAlien: 'antenas', corRobo: 'prata', modeloRobo: 'quadrado', ...normalizar(P.look) };
   $('tagEdit').value = P.tag;
   const f = faixaNivel(P.xp || 0);
   $('nivelEditor').textContent = 'Nv ' + f.n;
@@ -235,7 +235,9 @@ function abrirEditor() {
   mostrar('telaPerfil');
 }
 function desenharEditor() {
-  $('previaGrande').innerHTML = avatarSVG(rascunho, 110);
+  const festa = abaAtual === 'comemora' || abaAtual === 'frase';
+  $('previaGrande').innerHTML = festa ? comemoracaoHTML(rascunho, 96) : avatarSVG(rascunho, 110);
+  $('previaGrande').classList.toggle('festa', festa);
   // bichinho não tem pele, cabelo, barba, boca nem roupa: mostra só o que vale pra ele
   const visiveis = partesDe(rascunho), bicho = rascunho.tipo !== 'pessoa';
   const partes = PARTES.filter(([k]) => visiveis.includes(k)).map(([k, n]) => [k, bicho && k === 'corRoupa' ? rotuloCor(rascunho.tipo) : n]);
@@ -247,8 +249,10 @@ function desenharEditor() {
     const req = it.ach ? '🏅 Conquista' : `Nível ${it.lvl}`;
     return `<button class="item ${rascunho[abaAtual] === it.id ? 'on' : ''} ${ok ? '' : 'preso'}" data-id="${it.id}">
       ${ok ? '' : '<span class="cadeado">🔒</span>'}
-      ${avatarSVG({ ...rascunho, [abaAtual]: it.id }, 64)}
-      <span>${esc(it.nome)}</span>${ok ? '' : `<span class="req">${req}</span>`}
+      ${abaAtual === 'frase' ? `<span class="balao-item">${esc(it.nome)}</span>`
+        : abaAtual === 'comemora' ? comemoracaoHTML({ ...rascunho, comemora: it.id }, 56, false)
+        : avatarSVG({ ...rascunho, [abaAtual]: it.id }, 64)}
+      ${abaAtual === 'frase' ? '' : `<span>${esc(it.nome)}</span>`}${ok ? '' : `<span class="req">${req}</span>`}
     </button>`;
   }).join('');
 }
@@ -762,14 +766,12 @@ function mostrarMini(w) {
 function montarPlacarRecap() {
   const js = Object.values(S.recapJog).sort((a, b) => a.name.localeCompare(b.name, 'pt'));
   $('recapPlacar').innerHTML = js.map(j => `<span class="pl-jog" data-id="${esc(j.id)}">
-    <span class="pl-av">${avatarSVG(j.look, 34)}</span><span class="pl-nome">${esc(j.name)}</span><b class="pl-pts">0</b></span>`).join('');
+    <span class="pl-av">${avatarSVG(j.look, 34)}</span><span class="pl-nome">${esc(j.name)}</span></span>`).join('');
 }
+// sem mostrar o total: só o bonequinho comemora quando recebe pontos (assim ninguém calcula o vencedor antes)
 function atualizarPlacarRecap(totais, quemPula = []) {
-  if (!totais) return;
   $('recapPlacar').querySelectorAll('.pl-jog').forEach(el => {
-    const id = el.dataset.id, b = el.querySelector('.pl-pts');
-    if (b.textContent !== String(totais[id] || 0)) b.textContent = totais[id] || 0;
-    if (quemPula.includes(id)) { el.classList.remove('pulou'); void el.offsetWidth; el.classList.add('pulou'); }
+    if (quemPula.includes(el.dataset.id)) { el.classList.remove('pulou'); void el.offsetWidth; el.classList.add('pulou'); }
   });
 }
 // "+N" sai do card e voa até o bonequinho de quem achou a palavra
@@ -940,7 +942,9 @@ function desenharPasso(p) {
     const titulo = !p.varios ? 'Sua pontuação' : p.ids.length > 1 ? '🤝 EMPATE NO TOPO!' : '🏆 CAMPEÃO DA RODADA! 🏆';
     html = `<div class="rc campeao">
       <div class="lugar">${titulo}</div>
-      <div class="quem">${p.ids.map(id => `<div class="boneco-pula">${avatarSVG(S.recapJog[id].look, p.ids.length > 1 ? 100 : 150)}</div>`).join('')}</div>
+      <div class="quem vencedores">${p.ids.map(id => p.varios
+        ? comemoracaoHTML(S.recapJog[id].look, p.ids.length > 1 ? 96 : 140)
+        : `<div class="boneco-pula">${avatarSVG(S.recapJog[id].look, 150)}</div>`).join('')}</div>
       <div class="nome-grande">${nomes.map(esc).join(' & ')}</div>
       <div class="placar-grande">${p.score} pontos</div></div>`;
     som.sfx('fanfarra'); confete(p.varios ? 160 : 90);

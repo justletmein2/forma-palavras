@@ -561,3 +561,55 @@ html[data-tema="escuro"] { --papel: #262046; --tinta: #f1ecff; --escuro-txt: #2b
   .rc .quem .boneco { width: 46px; height: 46px; }
 }
 .recap-placar[hidden] + .recap-topo { margin-top: 46px; }
+
+/* =========== comemoração do vencedor =========== */
+.comemora { position: relative; display: inline-flex; flex-direction: column; align-items: center; line-height: 0; }
+.comemora .boneco { position: relative; z-index: 1; }
+.c-pulinho .boneco { animation: pula 1s ease-in-out infinite; }
+.c-giro .boneco { animation: cGiro 1.8s cubic-bezier(.6,0,.3,1) infinite; }
+@keyframes cGiro { 0%, 25% { transform: rotate(0); } 75%, 100% { transform: rotate(360deg); } }
+.c-danca .boneco { animation: cDanca .9s ease-in-out infinite; }
+@keyframes cDanca { 0%, 100% { transform: translateX(-10%) rotate(-12deg); } 50% { transform: translateX(10%) rotate(12deg); } }
+.c-gigante .boneco { animation: cGigante 1.6s cubic-bezier(.3,1.6,.6,1) infinite; }
+@keyframes cGigante { 0%, 100% { transform: scale(1); } 45%, 60% { transform: scale(1.3); } }
+.c-foguete .boneco { animation: cFoguete 2s ease-in-out infinite; }
+.c-foguete::after { content: '🔥'; position: absolute; bottom: -6px; left: 50%; font-size: 30px; line-height: 1; transform: translateX(-50%); animation: cFogo 2s ease-in-out infinite; z-index: 0; }
+@keyframes cFoguete { 0%, 100% { transform: translateY(0); } 15% { transform: translateY(6%) scale(1.05, .92); } 50% { transform: translateY(-35%); } 70% { transform: translateY(-30%); } }
+@keyframes cFogo { 0%, 12%, 80%, 100% { opacity: 0; transform: translate(-50%, 0) scale(.5); } 50% { opacity: 1; transform: translate(-50%, -150%) scale(1.3) rotate(180deg); } 70% { opacity: 1; transform: translate(-50%, -125%) scale(1) rotate(180deg); } }
+.c-cambalhota .boneco { animation: cCambalhota 1.8s ease-in-out infinite; }
+@keyframes cCambalhota { 0%, 20% { transform: translateY(0) rotate(0); } 55% { transform: translateY(-30%) rotate(-200deg); } 85%, 100% { transform: translateY(0) rotate(-360deg); } }
+.c-estrelas .boneco { animation: pula 1.2s ease-in-out infinite; }
+.c-estrelas::before, .c-estrelas::after { content: '✨'; position: absolute; font-size: 26px; line-height: 1; z-index: 2; top: 50%; left: 50%; animation: cOrbita 2.4s linear infinite; }
+.c-estrelas::after { content: '⭐'; animation-delay: -1.2s; }
+@keyframes cOrbita { from { transform: translate(-50%, -50%) rotate(0) translateX(var(--orb, 80px)) rotate(0); } to { transform: translate(-50%, -50%) rotate(360deg) translateX(var(--orb, 80px)) rotate(-360deg); } }
+.c-disco .boneco { animation: cDisco 1.2s linear infinite, cDanca .6s ease-in-out infinite; }
+@keyframes cDisco { from { filter: hue-rotate(0) saturate(1.6); } to { filter: hue-rotate(360deg) saturate(1.6); } }
+.c-aura .boneco { animation: cAura 1.4s ease-in-out infinite, pula 1.4s ease-in-out infinite; border-radius: 50%; }
+@keyframes cAura { 0%, 100% { filter: drop-shadow(0 0 6px #ffd23f); } 50% { filter: drop-shadow(0 0 22px #ffc400) drop-shadow(0 0 40px #fff2a8); } }
+
+.balao-fala {
+  position: absolute; z-index: 3; bottom: 88%; left: 62%; line-height: 1.15;
+  background: #fff; color: #2b1d5c; font-weight: 800; font-size: 17px; padding: 8px 12px; border-radius: 18px;
+  box-shadow: 0 4px 0 rgba(43,29,92,.25); width: max-content; max-width: 170px; text-align: center;
+  animation: balao .5s cubic-bezier(.3,1.7,.5,1) .7s backwards, balaoBalanca 2.2s ease-in-out 1.2s infinite;
+}
+.balao-fala::after { content: ''; position: absolute; left: 14px; bottom: -9px; border: 6px solid transparent; border-top: 10px solid #fff; border-bottom: 0; }
+@keyframes balao { from { transform: scale(0) rotate(-12deg); transform-origin: bottom left; opacity: 0; } }
+@keyframes balaoBalanca { 50% { transform: translateY(-4px) rotate(-2deg); } }
+.vencedores { gap: 24px; margin-top: 30px; }
+.vencedores .comemora .balao-fala { left: 40%; font-size: 15px; }
+.previa-grande.festa { padding-top: 34px; }
+.previa-grande.festa .balao-fala { font-size: 12px; padding: 5px 8px; left: 50%; max-width: 150px; }
+.balao-item { display: grid; place-items: center; min-height: 64px; padding: 6px; font-size: 14px; font-weight: 800; line-height: 1.15; background: #fff; border-radius: 14px; box-shadow: 0 2px 0 rgba(43,29,92,.15); color: #2b1d5c; width: 100%; }
+.item .comemora { margin: 2px 0; }
+[data-tema="escuro"] .balao-item { background: #43397a; color: var(--tinta); }
+@media (prefers-reduced-motion: reduce) { .comemora::before, .comemora::after { display: none; } }
+.rc .vencedores .boneco { width: auto; height: auto; }
+.vencedores .comemora .balao-fala { left: 45%; }
+.previa-grande.festa { padding-top: 40px; }
+.previa-grande.festa .comemora { --orb: 52px; }
+.previa-grande.festa .balao-fala { left: 0; right: 0; margin: 0 auto; bottom: 92%; font-size: 12px; padding: 5px 8px; max-width: 120px; }
+.previa-grande.festa .balao-fala::after { left: calc(50% - 6px); }
+.item .comemora { --orb: 34px; }
+.item .comemora::before, .item .comemora::after { font-size: 16px; }
+.rc .quem .balao-fala { max-width: 170px; white-space: normal; overflow: visible; text-overflow: clip; }

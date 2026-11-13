@@ -7,6 +7,19 @@ export const CATALOGO = {
     { id: 'passaro', nome: 'Passarinho' }, { id: 'maltes', nome: 'Maltesinha' }, { id: 'gato', nome: 'Gatinho' },
     { id: 'alien', nome: 'Alien' }, { id: 'robo', nome: 'Robô' },
   ],
+  // comemoração do vencedor (só aparece no card de campeão, no fim da recapitulação)
+  comemora: [
+    { id: 'pulinho', nome: 'Pulinhos' }, { id: 'giro', nome: 'Giro' }, { id: 'danca', nome: 'Dancinha', lvl: 2 },
+    { id: 'gigante', nome: 'Fica gigante', lvl: 3 }, { id: 'foguete', nome: 'Foguete', lvl: 4 }, { id: 'cambalhota', nome: 'Cambalhota', lvl: 5 },
+    { id: 'estrelas', nome: 'Chuva de estrelas', lvl: 7 }, { id: 'disco', nome: 'Discoteca', lvl: 9 }, { id: 'aura', nome: 'Aura dourada', ach: 'vitoria' },
+  ],
+  frase: [
+    { id: 'ganhei', nome: 'Ganhei! 🎉' }, { id: 'facil', nome: 'Foi fácil!' }, { id: 'gg', nome: 'GG! 🤝', lvl: 2 },
+    { id: 'dicionario', nome: 'Sou um dicionário! 📖', lvl: 3 }, { id: 'manga', nome: 'Chupa essa manga! 🥭', lvl: 4 },
+    { id: 'aprendam', nome: 'Aprendam comigo 😎', lvl: 5 }, { id: 'lenco', nome: 'Alguém tem um lencinho? 🤧', lvl: 6 },
+    { id: 'suei', nome: 'Nem suei 😅', lvl: 8 }, { id: 'realeza', nome: 'Realeza das letras 👑', lvl: 10 },
+    { id: 'proximo', nome: 'Próximo! 💅', lvl: 12 }, { id: 'imparavel', nome: 'Sou imparável! 🚀', ach: 'maratona' },
+  ],
   // orelhas da Maltesinha
   orelhas: [
     { id: 'curtas', nome: 'Curtinhas' }, { id: 'medias', nome: 'Médias' }, { id: 'compridas', nome: 'Compridas', lvl: 3 },
@@ -124,6 +137,7 @@ export const PARTES = [
   ['tipo', 'Personagem'], ['plumagem', 'Cor das penas'], ['pelagem', 'Cor do pelo'], ['orelhas', 'Orelhas'],
   ['corAlien', 'Cor do alien'], ['modeloAlien', 'Modelo'], ['corRobo', 'Cor da lataria'], ['modeloRobo', 'Modelo'], ['pele', 'Pele'], ['cabelo', 'Cabelo'], ['corCabelo', 'Cor do cabelo'], ['barba', 'Barba'], ['olhos', 'Olhos'], ['boca', 'Boca'],
   ['roupa', 'Roupa'], ['corRoupa', 'Cor da roupa'], ['chapeu', 'Chapéu'], ['acessorio', 'Acessório'], ['fundo', 'Fundo'],
+  ['comemora', 'Comemoração'], ['frase', 'Frase de vitória'],
 ];
 
 // Partes que valem para os bichinhos (o resto é só para pessoa)
@@ -132,9 +146,10 @@ const SO_BICHO = ['plumagem', 'pelagem', 'orelhas', 'corAlien', 'modeloAlien', '
 // nome da "cor" de cada personagem no editor
 export function rotuloCor(tipo) { return { alien: 'Cor do macacão', robo: 'Cor das luzes' }[tipo] || 'Lencinho'; }
 // partes que aparecem em cada personagem
-export function partesDe(look) {
+export function partesDe(look) { return [...partesDoCorpo(look), 'comemora', 'frase']; }
+function partesDoCorpo(look) {
   const t = normalizar(look).tipo || 'pessoa';
-  if (t === 'pessoa') return PARTES.filter(([k]) => !SO_BICHO.includes(k)).map(([k]) => k);
+  if (t === 'pessoa') return PARTES.filter(([k]) => !SO_BICHO.includes(k) && k !== 'comemora' && k !== 'frase').map(([k]) => k);
   if (t === 'passaro') return ['tipo', 'plumagem', ...PARTES_BICHO.slice(1)];
   if (t === 'gato') return ['tipo', 'pelagem', ...PARTES_BICHO.slice(1)];
   if (t === 'maltes') return ['tipo', 'orelhas', ...PARTES_BICHO.slice(1)];
@@ -160,7 +175,7 @@ export const CONQUISTAS = {
 export function lookPadrao() {
   const r = a => a.filter(x => !x.lvl && !x.ach)[Math.floor(Math.random() * a.filter(x => !x.lvl && !x.ach).length)].id;
   return {
-    tipo: 'pessoa', barba: 'nada', plumagem: 'sanhaco', pelagem: 'laranja', orelhas: 'medias', corAlien: 'verde', modeloAlien: 'antenas', corRobo: 'prata', modeloRobo: 'quadrado', 
+    tipo: 'pessoa', barba: 'nada', comemora: 'pulinho', frase: 'ganhei', plumagem: 'sanhaco', pelagem: 'laranja', orelhas: 'medias', corAlien: 'verde', modeloAlien: 'antenas', corRobo: 'prata', modeloRobo: 'quadrado', 
     pele: r(CATALOGO.pele), cabelo: r(CATALOGO.cabelo), corCabelo: r(CATALOGO.corCabelo), olhos: 'normal', boca: 'sorriso',
     roupa: 'camiseta', corRoupa: r(CATALOGO.corRoupa), chapeu: 'nada', acessorio: 'nada', fundo: r(CATALOGO.fundo),
   };
@@ -544,4 +559,12 @@ function padraoFundo(id) {
     case 'confete': return [[12, 20, '#ff5fa2', 20], [26, 8, '#36b6ff', -30], [44, 14, '#ffd23f', 45], [64, 8, '#2fd47a', 10], [82, 18, '#8f6bff', -20], [90, 40, '#ff9f43', 60], [8, 44, '#2fd47a', -50], [14, 66, '#ffd23f', 30], [88, 64, '#ff5fa2', -10]].map(([x, y, c, r]) => `<rect x="${x}" y="${y}" width="6" height="3" rx="1" fill="${c}" transform="rotate(${r} ${x + 3} ${y + 1.5})"/>`).join('');
     default: return '';
   }
+}
+
+// texto da frase de vitória
+export function textoFrase(id) { return (CATALOGO.frase.find(f => f.id === id) || CATALOGO.frase[0]).nome; }
+// bonequinho comemorando (animação + balãozinho de fala)
+export function comemoracaoHTML(look = {}, tam = 150, comBalao = true) {
+  const c = CATALOGO.comemora.some(x => x.id === look.comemora) ? look.comemora : 'pulinho';
+  return `<div class="comemora c-${c}">${avatarSVG(look, tam)}${comBalao ? `<span class="balao-fala">${textoFrase(look.frase)}</span>` : ''}</div>`;
 }
