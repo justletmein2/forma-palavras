@@ -212,6 +212,7 @@
   <h2 class="titulo-fim">🏁 Fim de jogo!</h2>
   <div id="podio" class="podio"></div>
   <div id="ganhos" class="cartao ganhos"></div>
+  <p class="dica-sig">📖 Toque numa palavra pra ver o significado</p>
   <div id="ranking" class="cartao ranking"></div>
   <div class="cartao">
     <div class="rotulo">🔎 Palavras que ninguém achou</div>
@@ -243,6 +244,16 @@
     <p id="avisoNavOu" class="dica">Ou entre com e-mail, que funciona aqui mesmo:</p>
     <button id="btnUsarEmail" class="botao roxo">✉️ Entrar com e-mail</button>
     <button id="btnFecharAviso" class="link escuro">Fechar</button>
+  </div>
+</div>
+<div id="sigSheet" class="aviso-nav sig-sheet" hidden role="dialog" aria-labelledby="sigPalavra">
+  <div class="aviso-nav-caixa sig-caixa">
+    <h3 id="sigPalavra"></h3>
+    <div id="sigConteudo" aria-live="polite"></div>
+    <div class="sig-rodape">
+      <a id="sigLink" class="sig-fonte" target="_blank" rel="noopener" hidden>Fonte: Wikcionário · ver mais</a>
+      <button id="btnFecharSig" class="botao roxo">Fechar</button>
+    </div>
   </div>
 </div>
 <div id="trofeuPop" class="trofeu-pop" hidden role="status"></div>

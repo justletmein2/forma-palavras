@@ -1,5 +1,6 @@
 import { loadDict, dictReady, lookup, pontos, gerarGrade, resolver, exibir, raridade, semAcento, caminhoDe, ehPalavrao } from './dict.js';
 import { TROFEUS, GRAUS, trofeu, conferir, contar } from './trofeus.js';
+import { significado, paginaWiki } from './significado.js';
 import { criarTabuleiro } from './board.js';
 import { avatarSVG, comemoracaoHTML, textoFrase, CATALOGO, PARTES, partesDe, normalizar, rotuloCor, CONQUISTAS, lookPadrao, liberado, nivelDe, faixaNivel, itensNovos } from './avatar.js';
 import { montarRecap, passoEm } from './recap.js';
@@ -365,6 +366,35 @@ function abrirTrofeus() {
   mostrar('telaTrofeus');
 }
 $('btnTrofeus').onclick = abrirTrofeus;
+
+// ---------- significado das palavras (tela final) ----------
+let pedidoSig = 0;
+async function mostrarSignificado(plain) {
+  const pal = exibir(plain), meu = ++pedidoSig, caixa = $('sigConteudo');
+  $('sigPalavra').textContent = pal.toUpperCase();
+  caixa.innerHTML = '<p class="sig-carregando">📖 Procurando no dicionário…</p>';
+  $('sigLink').hidden = true;
+  $('sigSheet').hidden = false;
+  let r = null, falhou = false;
+  try { r = await significado(pal, S.family); } catch { falhou = true; }
+  if (meu !== pedidoSig) return;
+  if (falhou) { caixa.innerHTML = `<p class="sig-vazio">${navigator.onLine === false ? '📡 Sem internet agora. Tente de novo quando voltar a conexão.' : '😕 Não consegui buscar agora. Tente de novo daqui a pouco.'}</p>`; return; }
+  if (!r) { caixa.innerHTML = '<p class="sig-vazio">🤔 Não encontrei o significado dessa palavra.</p>'; return; }
+  caixa.innerHTML = (r.nota ? `<p class="sig-nota">${esc(r.nota)}</p>` : '') + (r.base ? `<p class="sig-base">${esc(r.base)}</p>` : '') +
+    r.secoes.map(sc => `<div class="sig-secao"><span class="sig-classe">${esc(sc.classe)}</span><ol>${sc.defs.map(d => `<li>${esc(d)}</li>`).join('')}</ol></div>`).join('');
+  $('sigLink').href = r.pagina; $('sigLink').hidden = false;
+}
+$('telaFim').addEventListener('click', e => {
+  const el = e.target.closest('.palavra[data-w]');
+  if (el) { som.sfx('tile'); mostrarSignificado(el.dataset.w); }
+});
+$('telaFim').addEventListener('keydown', e => {
+  const el = e.target.closest('.palavra[data-w]');
+  if (el && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); mostrarSignificado(el.dataset.w); }
+});
+const fecharSig = () => { pedidoSig++; $('sigSheet').hidden = true; };
+$('btnFecharSig').onclick = fecharSig;
+$('sigSheet').addEventListener('click', e => { if (e.target.id === 'sigSheet') fecharSig(); });
 $('btnVoltarTrofeus').onclick = () => { desenharInicio(); mostrar('telaInicio'); };
 $('btnVoltarPerfil').onclick = () => { mostrar('telaInicio'); };
 // Tira chapéu, acessório, barba etc. e volta olhos/boca/roupa/fundo ao básico.
@@ -1132,7 +1162,7 @@ function desenharFim() {
         <small>${ws.length} palavras</small><span class="pts">${p.score} pts</span></summary>
       <div class="achadas">${ws.map(w => {
         const ex = varios && R.quem.get(w).length === 1;
-        return `<span class="palavra ${ex ? 'exclusiva' : ''}">${esc(exibir(w))}<sup>+${pontos(w.length) * (ex ? 2 : 1)}</sup></span>`;
+        return `<span class="palavra ${ex ? 'exclusiva' : ''}" data-w="${esc(w)}" role="button" tabindex="0">${esc(exibir(w))}<sup>+${pontos(w.length) * (ex ? 2 : 1)}</sup></span>`;
       }).join('') || '<small>nenhuma 😅</small>'}</div>
     </details>`;
   }).join('');
@@ -1140,7 +1170,7 @@ function desenharFim() {
   if (dictReady() && S.grid) {
     const todas = [...resolver(S.grid, S.family)].filter(w => !R.quem.has(w));
     todas.sort((a, b) => (raridade(a) < 60000 ? 0 : 1) - (raridade(b) < 60000 ? 0 : 1) || b.length - a.length || raridade(a) - raridade(b));
-    $('escondidas').innerHTML = todas.slice(0, 18).map(w => `<span class="palavra">${esc(exibir(w))}<sup>+${pontos(w.length)}</sup></span>`).join('')
+    $('escondidas').innerHTML = todas.slice(0, 18).map(w => `<span class="palavra" data-w="${esc(w)}" role="button" tabindex="0">${esc(exibir(w))}<sup>+${pontos(w.length)}</sup></span>`).join('')
       || '<small>Vocês acharam tudo! 🤯</small>';
   }
   const podeRepetir = souHost();

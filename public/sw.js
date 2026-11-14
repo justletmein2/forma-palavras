@@ -1,10 +1,10 @@
 // Service worker: deixa o jogo abrir sem internet (treino sozinho) e carregar mais rápido.
 // Código do jogo: tenta a rede primeiro (sempre a versão nova) e usa a cópia guardada se cair.
 // Dicionário, imagens e fontes: usa a cópia guardada e atualiza por trás.
-const CACHE = 'forma-palavras-v1';
+const CACHE = 'forma-palavras-v2';
 const BASICO = ['./', 'index.html', 'style.css', 'manifest.json', 'palavras.txt', 'palavroes.txt',
   'js/main.js', 'js/net.js', 'js/dict.js', 'js/board.js', 'js/avatar.js', 'js/recap.js',
-  'js/efeitos.js', 'js/audio.js', 'js/config.js', 'icone-192.png', 'apple-touch-icon.png'];
+  'js/efeitos.js', 'js/audio.js', 'js/trofeus.js', 'js/significado.js', 'js/config.js', 'icone-192.png', 'apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(BASICO)).then(() => self.skipWaiting()));

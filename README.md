@@ -56,5 +56,5 @@ Para gerar de novo, nesta ordem:
 3. `tools/completar_flexoes.py palavras.txt hunspell_base` — devolve plurais e femininos que o
    corretor confirma.
 
-Ao mudar arquivos do site, aumente a versão em `public/sw.js` (`forma-palavras-v1` → `v2`) se
+Ao mudar arquivos do site, aumente a versão em `public/sw.js` (`forma-palavras-v2` → `v3`) se
 quiser forçar todo mundo a baixar o dicionário novo.

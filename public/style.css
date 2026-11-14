@@ -677,3 +677,24 @@ html[data-tema="escuro"] { --papel: #262046; --tinta: #f1ecff; --escuro-txt: #2b
 .trofeu-pop small { font-size: 13px; opacity: .8; }
 .trofeu-pop b { font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .trofeu-pop.platina { background: linear-gradient(120deg, #2a4d66, #5aa7c9 50%, #2a4d66); }
+
+/* ---------- significado das palavras ---------- */
+#telaFim .palavra[data-w] { cursor: pointer; text-decoration: underline dotted rgba(108, 92, 231, .55); text-underline-offset: 4px; }
+#telaFim .palavra[data-w]:active { transform: scale(.94); }
+.dica-sig { margin: 0; text-align: center; color: #fff; font-weight: 700; font-size: 15px; text-shadow: 0 1px 0 rgba(43,29,92,.35); }
+.sig-sheet { place-items: end center; }
+.sig-caixa { max-width: 460px; max-height: 75vh; overflow-y: auto; margin-bottom: env(safe-area-inset-bottom, 0px); animation: sobeSig .3s; }
+@keyframes sobeSig { from { transform: translateY(40px); opacity: 0; } }
+.sig-caixa h3 { font-size: 26px; letter-spacing: .04em; color: var(--roxo); }
+.sig-nota { font-style: italic; opacity: .8; }
+.sig-base { font-weight: 800; font-size: 19px !important; }
+.sig-secao { margin-top: 4px; }
+.sig-classe { display: inline-block; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em;
+  background: var(--amarelo); color: #4a3a00; border-radius: 8px; padding: 1px 8px; }
+.sig-secao ol { margin: 6px 0 0; padding-left: 22px; font-size: 16px; line-height: 1.35; display: flex; flex-direction: column; gap: 4px; }
+.sig-carregando, .sig-vazio { font-size: 16px; }
+.sig-carregando { animation: pisca 1s infinite alternate; }
+@keyframes pisca { to { opacity: .45; } }
+.sig-rodape { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+.sig-fonte { font-size: 13px; color: var(--roxo); }
+.sig-rodape .botao { width: auto; padding: 8px 22px; }
