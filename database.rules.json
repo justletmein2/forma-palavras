@@ -81,6 +81,9 @@
           },
           "perigos": {
             ".write": "auth != null && root.child('penatabua/rooms/' + $code + '/meta/host').val() === auth.uid"
+          },
+          "bots": {
+            ".write": "auth != null && root.child('penatabua/rooms/' + $code + '/meta/host').val() === auth.uid"
           }
         }
       }
