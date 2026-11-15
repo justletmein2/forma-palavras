@@ -10,6 +10,9 @@
 
 - Sem Firebase: abra `public/index.html?local=1&tempo=30` servido localmente
   (`cd public && python3 -m http.server`). Cada aba vira um jogador.
+- `database.rules.json` vale pro projeto Firebase inteiro e também tem o caminho `penatabua`
+  (do jogo Pé na Tábua, `justletmein2/pe-na-tabua`). Não apague essa parte; mantenha os dois
+  repositórios com o mesmo arquivo.
 - Mudou `database.rules.json`? Peça pro Lucas colar no Console do Firebase
   (Realtime Database → Regras), ou publique com o Firebase CLI se houver acesso.
 - Dicionário: `tools/build_dict.py` (veja o cabeçalho para as fontes).
