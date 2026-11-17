@@ -926,7 +926,7 @@ function atualizarPlacarRecap(totais, quemPula = []) {
 }
 // "+N" sai do card e voa até o bonequinho de quem achou a palavra
 function voarPontos(p) {
-  const vel = ctlRecap().vel || 1, real = p.dur / vel;
+  const vel = velRecap(), real = p.dur / vel;
   const atraso = Math.min(750, real * 0.35), dur = Math.min(650, real * 0.4);
   const passo = S.passoAtual;
   setTimeout(() => {
@@ -978,13 +978,30 @@ function comecarRecap() {
 // Controle da recapitulação (só o anfitrião mexe; todo mundo segue o mesmo relógio):
 // tempo = base + (agora − ancora) × vel, ou "base" parado se pausado
 const ctlRecap = () => (S.modo === 'online' ? (S.meta && S.meta.recap) || {} : S.ctlSolo);
+// "ate": acelerando até as palavras de 5+ letras; ao chegar lá, volta pra velocidade normal
+const VEL_ATE = 6;
 function tempoRecap(t, c = ctlRecap()) {
   if (c.ancora == null) return t - S.recapIni;
-  return c.pausado ? c.base : c.base + (t - c.ancora) * (c.vel || 1);
+  if (c.pausado) return c.base;
+  if (c.ate != null) {
+    const chega = c.ancora + (c.ate - c.base) / VEL_ATE; // instante em que chega no alvo
+    return t < chega ? c.base + (t - c.ancora) * VEL_ATE : c.ate + (t - chega);
+  }
+  return c.base + (t - c.ancora) * (c.vel || 1);
+}
+function velRecap(t = agora(), c = ctlRecap()) {
+  if (c.ate != null) return tempoRecap(t, c) < c.ate ? VEL_ATE : 1;
+  return c.vel || 1;
+}
+// Próximo passo onde começa uma sequência de palavras de 5+ letras (depois do passo atual)
+function alvoCinco(i) {
+  const ps = S.recap.passos, cinco = p => p && p.t === 'palavra' && p.w.length >= 5;
+  for (let k = Math.max(i + 1, 1); k < ps.length; k++) if (cinco(ps[k]) && !cinco(ps[k - 1])) return ps[k].ini;
+  return null;
 }
 function mudarCtl(fn) {
   const t = agora(), c = ctlRecap();
-  const atual = { base: tempoRecap(t, c), ancora: t, vel: c.vel || 1, pausado: !!c.pausado };
+  const atual = { base: tempoRecap(t, c), ancora: t, vel: c.ate != null ? 1 : (c.vel || 1), pausado: !!c.pausado, ate: null };
   fn(atual);
   if (S.modo === 'online') net.atualizarMeta(S.code, { recap: atual }); else S.ctlSolo = atual;
 }
@@ -992,13 +1009,15 @@ function mudarCtl(fn) {
 function rodarRecap(t) {
   const c = ctlRecap();
   const ms = tempoRecap(t, c);
-  const host = souHost(), vel = c.vel || 1;
+  const host = souHost(), vel = velRecap(t, c);
+  const indo = c.ate != null && ms < c.ate;
+  $('btnCinco').hidden = indo || alvoCinco(passoEm(S.recap, ms)) == null;
   $('btnPausa').textContent = c.pausado ? '▶ Continuar' : '⏸ Pausar';
-  $('btnRapido').textContent = vel === 1 ? '⏩ Acelerar' : `⏩ ${vel}x`;
-  $('btnRapido').classList.toggle('ligado', vel > 1);
+  $('btnRapido').textContent = indo || vel === 1 ? '⏩ Acelerar' : `⏩ ${vel}x`;
+  $('btnRapido').classList.toggle('ligado', !indo && vel > 1);
   $('recapCtl').hidden = !host;
   $('btnPular').hidden = ms >= S.recap.inicioRanking;
-  $('recapAviso').textContent = c.pausado && !host ? '⏸ Pausado pelo anfitrião' : (!host && vel > 1 ? `⏩ Passando em ${vel}x` : '');
+  $('recapAviso').textContent = c.pausado && !host ? '⏸ Pausado pelo anfitrião' : (indo ? '⏩ Acelerando até as palavras de 5 letras…' : (!host && vel > 1 ? `⏩ Passando em ${vel}x` : ''));
   if (ms >= S.recap.total) { irProFim(); return; }
   const i = passoEm(S.recap, ms);
   if (i !== S.passoAtual) { S.passoAtual = i; desenharPasso(S.recap.passos[i]); }
@@ -1107,6 +1126,12 @@ function desenharPasso(p) {
 
 $('btnPausa').onclick = () => mudarCtl(c => { c.pausado = !c.pausado; });
 $('btnRapido').onclick = () => mudarCtl(c => { c.vel = c.vel >= 3 ? 1 : c.vel + 1; c.pausado = false; });
+// acelera até a próxima leva de palavras de 5+ letras e volta pra velocidade normal ao chegar
+$('btnCinco').onclick = () => mudarCtl(c => {
+  const ate = alvoCinco(passoEm(S.recap, c.base));
+  if (ate == null) return;
+  c.ate = ate; c.vel = 1; c.pausado = false;
+});
 // pula direto pro fim (curiosidade + ranking), sem pausa
 $('btnPular').onclick = () => mudarCtl(c => { c.base = Math.max(c.base, S.recap.inicioRanking); c.pausado = false; });
 
