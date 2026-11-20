@@ -58,3 +58,6 @@ Para gerar de novo, nesta ordem:
 
 Ao mudar arquivos do site, aumente a versão em `public/sw.js` (`forma-palavras-v2` → `v3`) se
 quiser forçar todo mundo a baixar o dicionário novo.
+
+
+Lista de verbos do modo "sem verbos" derivada do léxico [MorphoBr](https://github.com/LR-POR/MorphoBr) (licença Apache 2.0).

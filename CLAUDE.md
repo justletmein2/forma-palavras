@@ -16,3 +16,9 @@
 - Mudou `database.rules.json`? Peça pro Lucas colar no Console do Firebase
   (Realtime Database → Regras), ou publique com o Firebase CLI se houver acesso.
 - Dicionário: `tools/build_dict.py` (veja o cabeçalho para as fontes).
+
+## Modo "sem verbos"
+
+- Opção da sala (`meta.semVerbos`), ligada pelo anfitrião. A lista fica em `public/verbos.txt`
+  (baixada só quando o modo está ligado) e é usada em `lookup`/`resolver` (dict.js).
+- Como a lista foi feita e como ajustar: `tools/README-verbos.md`.

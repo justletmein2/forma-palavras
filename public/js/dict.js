@@ -10,6 +10,8 @@ let rank = null;      // Map: "coracao" -> posição de frequência (menor = mai
 let sorted = null;    // chaves ordenadas, para busca de prefixo
 let palavroes = null; // Set de chaves sem acento
 let loading = null;
+let verbos = null;    // Set de chaves sem acento que são só verbo (modo "sem verbos")
+let carregandoVerbos = null;
 
 export function dictReady() { return !!display; }
 
@@ -35,10 +37,25 @@ export function loadDict(base = '') {
   return loading;
 }
 
-export function lookup(plain, family) {
+// verbos.txt: formas verbais (sem acento). Gerado a partir do léxico MorphoBr (licença Apache 2.0):
+// entra o que só existe como verbo, mais infinitivos e gerúndios; palavras que também são
+// substantivo/adjetivo de uso comum (casa, jogo, canto...) ficam de fora e continuam valendo.
+export function loadVerbos(base = '') {
+  if (carregandoVerbos) return carregandoVerbos;
+  carregandoVerbos = fetch(base + 'verbos.txt')
+    .then(r => { if (!r.ok) throw new Error('verbos'); return r.text(); })
+    .then(t => { verbos = new Set(t.split('\n').map(s => s.trim()).filter(Boolean)); })
+    .catch(e => { carregandoVerbos = null; throw e; });
+  return carregandoVerbos;
+}
+export function verbosReady() { return !!verbos; }
+export const ehVerbo = plain => !!(verbos && verbos.has(plain));
+
+export function lookup(plain, family, semVerbos = false) {
   const k = plain.toLowerCase();
   if (k.length < 3 || !display.has(k)) return null;
   if (family && palavroes.has(k)) return { blocked: true };
+  if (semVerbos && verbos && verbos.has(k)) return { blocked: 'verbo', word: display.get(k) };
   return { word: display.get(k), plain: k };
 }
 
@@ -107,14 +124,14 @@ function temPrefixo(p) {
 }
 
 // Todas as palavras (sem acento) que dá pra formar na grade.
-export function resolver(grid, family = false) {
+export function resolver(grid, family = false, semVerbos = false) {
   const g = grid.toLowerCase();
   const achadas = new Set();
   const usado = new Array(36).fill(false);
   const dfs = (i, pre) => {
     const w = pre + g[i];
     if (!temPrefixo(w)) return;
-    if (w.length >= 3 && display.has(w) && !(family && palavroes.has(w))) achadas.add(w);
+    if (w.length >= 3 && display.has(w) && !(family && palavroes.has(w)) && !(semVerbos && verbos && verbos.has(w))) achadas.add(w);
     if (w.length >= 13) return;
     usado[i] = true;
     for (const j of VIZ[i]) if (!usado[j]) dfs(j, w);

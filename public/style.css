@@ -698,3 +698,6 @@ html[data-tema="escuro"] { --papel: #262046; --tinta: #f1ecff; --escuro-txt: #2b
 .sig-rodape { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
 .sig-fonte { font-size: 13px; color: var(--roxo); }
 .sig-rodape .botao { width: auto; padding: 8px 22px; }
+
+/* aviso de rodada sem verbos */
+.selo-modo { align-self: center; margin: 4px auto 0; width: max-content; font-size: 13px; font-weight: 800; background: var(--tinta); color: var(--amarelo); border-radius: 999px; padding: 3px 12px; }

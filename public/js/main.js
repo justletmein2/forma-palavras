@@ -1,4 +1,4 @@
-import { loadDict, dictReady, lookup, pontos, gerarGrade, resolver, exibir, raridade, semAcento, caminhoDe, ehPalavrao } from './dict.js';
+import { loadDict, dictReady, loadVerbos, verbosReady, lookup, pontos, gerarGrade, resolver, exibir, raridade, semAcento, caminhoDe, ehPalavrao } from './dict.js';
 import { TROFEUS, GRAUS, trofeu, conferir, contar } from './trofeus.js';
 import { significado, paginaWiki } from './significado.js';
 import { criarTabuleiro } from './board.js';
@@ -16,7 +16,7 @@ const GRACA_RECAP = 2500; // espera as últimas palavras chegarem antes de recap
 const S = {
   modo: null,            // 'solo' | 'online'
   code: null, meta: null, players: {}, sairSala: null,
-  round: -1, grid: '', startAt: 0, dur: DURACAO, family: false,
+  round: -1, grid: '', startAt: 0, dur: DURACAO, family: false, semVerbos: false,
   achadas: new Map(),    // plain -> pontos base
   score: 0, fase: 'inicio', // inicio | sala | contagem | jogando | espera | recap | fim
   ultimaContagem: null,
@@ -454,7 +454,7 @@ const meuPublico = () => ({ name: P.tag, look: P.look, lvl: nivel() });
 
 $('btnSolo').onclick = async () => {
   if (precisaTag()) return;
-  S.modo = 'solo'; S.family = false; S.players = {};
+  S.modo = 'solo'; S.family = false; S.semVerbos = false; S.players = {};
   await garantirDicionario();
   novaRodadaSolo();
 };
@@ -561,10 +561,14 @@ function desenharSala() {
   $('esperando').hidden = host;
   $('chkAtrapalhar').checked = !!S.meta.atrapalhar;
   $('chkAtrapalhar').disabled = !host;
-  $('opcoesHost').hidden = !host && !S.meta.family && !S.meta.atrapalhar;
+  $('chkSemVerbos').checked = !!S.meta.semVerbos;
+  $('chkSemVerbos').disabled = !host;
+  if (S.meta.semVerbos) loadVerbos().catch(() => {}); // já vai baixando a lista enquanto espera
+  $('opcoesHost').hidden = !host && !S.meta.family && !S.meta.atrapalhar && !S.meta.semVerbos;
 }
 $('chkFamilia').onchange = () => { if (souHost()) net.atualizarMeta(S.code, { family: $('chkFamilia').checked }); };
 $('chkAtrapalhar').onchange = () => { if (souHost()) net.atualizarMeta(S.code, { atrapalhar: $('chkAtrapalhar').checked }); };
+$('chkSemVerbos').onchange = () => { if (souHost()) net.atualizarMeta(S.code, { semVerbos: $('chkSemVerbos').checked }); };
 
 $('btnCompartilhar').onclick = async () => {
   const url = location.origin + location.pathname + '?sala=' + S.code;
@@ -585,7 +589,7 @@ async function comecarOnline() {
   await net.atualizarMeta(S.code, {
     status: 'playing', grid: gerarGrade(Date.now()), round: (S.meta.round || 0) + 1,
     startAt: net.agora() + 4200, dur: DURACAO, family: !!S.meta.family, recap: null,
-    atrapalhar: !!S.meta.atrapalhar, poder: null,
+    atrapalhar: !!S.meta.atrapalhar, poder: null, semVerbos: !!S.meta.semVerbos,
   });
 }
 $('btnComecar').onclick = comecarOnline;
@@ -709,9 +713,11 @@ async function iniciarRodada(m) {
     round: m.round, grid: m.grid, startAt: m.startAt, dur: m.dur || DURACAO, family: !!m.family,
     achadas: new Map(), score: 0, fase: 'contagem', ultimaContagem: null, recap: null, passoAtual: -1, ganhos: null,
     possiveis: null, ultimaTentativa: 0, dicaPalavra: null, dicaNivel: 0,
-    atrapalhar: !!m.atrapalhar, ataquesVistos: new Set(), poderVisto: null, concedido: null, espectador,
+    atrapalhar: !!m.atrapalhar, semVerbos: !!m.semVerbos, ataquesVistos: new Set(), poderVisto: null, concedido: null, espectador,
   });
   fx.limpar(); fecharEscolha();
+  if (S.semVerbos) loadVerbos().catch(() => toast('Não consegui baixar a lista de verbos. Verifique a internet.', 4000));
+  $('seloSemVerbos').hidden = !S.semVerbos;
   $('achadas').innerHTML = '';
   if (salvo) {
     // recupera o que já tinha achado
@@ -764,8 +770,9 @@ function enviarPalavra(letras, caminho) {
   S.ultimaTentativa = agora();
   if (letras.length < 3) { if (letras.length === 2) { bolha(letras, 'erro'); som.sfx('bad'); } return; }
   const plain = semAcento(letras.toLowerCase());
-  const r = lookup(plain, S.family);
+  const r = lookup(plain, S.family, S.semVerbos);
   if (!r) { bolha(letras, 'erro'); tab.piscar(caminho, 'erro'); som.sfx('bad'); return; }
+  if (r.blocked === 'verbo') { bolha('🚫 ' + r.word.toUpperCase(), 'erro'); tab.piscar(caminho, 'erro'); som.sfx('bad'); toast('Rodada sem verbos: essa é verbo!'); return; }
   if (r.blocked) { bolha('🙈 ' + letras, 'erro'); tab.piscar(caminho, 'erro'); som.sfx('bad'); toast('No modo família essa não vale!'); return; }
   if (S.achadas.has(r.plain)) { bolha(r.word.toUpperCase() + ' já foi!', 'rep'); tab.piscar(caminho, 'rep'); som.sfx('repeat'); return; }
   const pts = pontos(r.plain.length);
@@ -807,10 +814,10 @@ function tique() {
       }
       return;
     }
-    if (!dictReady()) return;
+    if (!dictReady() || (S.semVerbos && !verbosReady())) return;
     S.fase = 'jogando';
     // todas as palavras do quadro, da menor pra maior (e das mais conhecidas primeiro), pras dicas
-    S.possiveis = [...resolver(S.grid, S.family)].sort((a, b) => a.length - b.length || raridade(a) - raridade(b));
+    S.possiveis = [...resolver(S.grid, S.family, S.semVerbos)].sort((a, b) => a.length - b.length || raridade(a) - raridade(b));
     S.ultimaTentativa = t; S.dicaPalavra = null; S.dicaNivel = 0; tab.dica([]);
     const c = $('contagem'); c.textContent = 'JÁ!'; som.sfx('count', 1);
     setTimeout(() => { c.hidden = true; }, 500);
@@ -868,7 +875,7 @@ function dadosDaRodada() {
 // A maior palavra que dava pra formar (empate: a mais conhecida)
 function maiorPossivel() {
   if (!dictReady() || !S.grid) return null;
-  const ws = [...resolver(S.grid, S.family)];
+  const ws = [...resolver(S.grid, S.family, S.semVerbos)];
   ws.sort((a, b) => b.length - a.length || raridade(a) - raridade(b));
   return ws[0] || null;
 }
@@ -1193,7 +1200,7 @@ function desenharFim() {
   }).join('');
 
   if (dictReady() && S.grid) {
-    const todas = [...resolver(S.grid, S.family)].filter(w => !R.quem.has(w));
+    const todas = [...resolver(S.grid, S.family, S.semVerbos)].filter(w => !R.quem.has(w));
     todas.sort((a, b) => (raridade(a) < 60000 ? 0 : 1) - (raridade(b) < 60000 ? 0 : 1) || b.length - a.length || raridade(a) - raridade(b));
     $('escondidas').innerHTML = todas.slice(0, 18).map(w => `<span class="palavra" data-w="${esc(w)}" role="button" tabindex="0">${esc(exibir(w))}<sup>+${pontos(w.length)}</sup></span>`).join('')
       || '<small>Vocês acharam tudo! 🤯</small>';
@@ -1222,4 +1229,4 @@ sincronizarPerfil().then(voltarPraSala);
 loadDict().catch(() => {});
 
 // modo de teste local: window.__poder('gelo') aplica um poder em mim
-if (net.modoLocal()) { window.__poder = tipo => fx.aplicar(tipo); window.__entrarGoogle = entrarGoogle; }
+if (net.modoLocal()) { window.__poder = tipo => fx.aplicar(tipo); window.__entrarGoogle = entrarGoogle; window.__enviar = (letras, cam = []) => enviarPalavra(letras, cam); window.__S = S; }
