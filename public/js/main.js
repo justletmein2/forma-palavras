@@ -594,6 +594,8 @@ async function comecarOnline() {
 }
 $('btnComecar').onclick = comecarOnline;
 $('btnDeNovo').onclick = () => (S.modo === 'online' ? comecarOnline() : novaRodadaSolo());
+// volta todo mundo pra tela da sala (onde ficam as opções), sem ninguém precisar sair
+$('btnConfigSala').onclick = () => { if (S.modo === 'online' && souHost()) net.atualizarMeta(S.code, { status: 'lobby' }); };
 
 // =====================================================================
 // PARTIDA
@@ -1207,6 +1209,7 @@ function desenharFim() {
   }
   const podeRepetir = souHost();
   $('btnDeNovo').hidden = !podeRepetir;
+  $('btnConfigSala').hidden = !(podeRepetir && S.modo === 'online');
   $('esperandoNovo').hidden = podeRepetir;
 }
 
@@ -1229,4 +1232,4 @@ sincronizarPerfil().then(voltarPraSala);
 loadDict().catch(() => {});
 
 // modo de teste local: window.__poder('gelo') aplica um poder em mim
-if (net.modoLocal()) { window.__poder = tipo => fx.aplicar(tipo); window.__entrarGoogle = entrarGoogle; window.__enviar = (letras, cam = []) => enviarPalavra(letras, cam); window.__S = S; }
+if (net.modoLocal()) { window.__poder = tipo => fx.aplicar(tipo); window.__entrarGoogle = entrarGoogle; window.__enviar = (letras, cam = []) => enviarPalavra(letras, cam); window.__S = S; window.__net = net; }
