@@ -102,6 +102,7 @@
       <li>Enquanto o dedo estiver na tela é uma palavra só. Soltou, o jogo confere.</li>
       <li>Voltou o dedo pra letra anterior? A última letra é desfeita.</li>
       <li>Sem verbos: palavras que são só verbo não valem na rodada.</li>
+      <li>Palavras grandes: só valem palavras com 5 letras ou mais.</li>
       <li>Modo Atrapalhar: depois de 1 minuto, a cada 30 segundos quem estiver em último escolhe alguém pra atrapalhar.</li>
       <li>Travou? Depois de uns segundos sem tentar nada aparece uma dica da menor palavra que falta.</li>
       <li>Palavra que só <b>você</b> achou vale o <b>dobro</b>!</li>
@@ -169,6 +170,11 @@
       <input type="checkbox" id="chkSemVerbos">
       <span class="trilho"></span>
       <span>Sem verbos 🚫 <small>(comer, falou, correndo… não valem; casa, jogo e canto valem, porque também são substantivo)</small></span>
+    </label>
+    <label class="chave">
+      <input type="checkbox" id="chkMin5">
+      <span class="trilho"></span>
+      <span>Palavras grandes 🐘 <small>(só valem palavras com 5 letras ou mais)</small></span>
     </label>
   </div>
   <button id="btnComecar" class="botao rosa enorme">🚀 Começar!</button>

@@ -51,9 +51,10 @@ export function loadVerbos(base = '') {
 export function verbosReady() { return !!verbos; }
 export const ehVerbo = plain => !!(verbos && verbos.has(plain));
 
-export function lookup(plain, family, semVerbos = false) {
+export function lookup(plain, family, semVerbos = false, minLetras = 3) {
   const k = plain.toLowerCase();
   if (k.length < 3 || !display.has(k)) return null;
+  if (k.length < minLetras) return { blocked: 'curta', word: display.get(k) };
   if (family && palavroes.has(k)) return { blocked: true };
   if (semVerbos && verbos && verbos.has(k)) return { blocked: 'verbo', word: display.get(k) };
   return { word: display.get(k), plain: k };
@@ -124,14 +125,14 @@ function temPrefixo(p) {
 }
 
 // Todas as palavras (sem acento) que dá pra formar na grade.
-export function resolver(grid, family = false, semVerbos = false) {
+export function resolver(grid, family = false, semVerbos = false, minLetras = 3) {
   const g = grid.toLowerCase();
   const achadas = new Set();
   const usado = new Array(36).fill(false);
   const dfs = (i, pre) => {
     const w = pre + g[i];
     if (!temPrefixo(w)) return;
-    if (w.length >= 3 && display.has(w) && !(family && palavroes.has(w)) && !(semVerbos && verbos && verbos.has(w))) achadas.add(w);
+    if (w.length >= minLetras && display.has(w) && !(family && palavroes.has(w)) && !(semVerbos && verbos && verbos.has(w))) achadas.add(w);
     if (w.length >= 13) return;
     usado[i] = true;
     for (const j of VIZ[i]) if (!usado[j]) dfs(j, w);
@@ -142,12 +143,13 @@ export function resolver(grid, family = false, semVerbos = false) {
 }
 
 // Gera várias grades e fica com a mais "rica" (mais palavras de uso comum).
-export function gerarGrade(seed = Date.now()) {
+// minLetras > 3 (modo palavras grandes): testa mais quadros e só conta as palavras que valem
+export function gerarGrade(seed = Date.now(), minLetras = 3) {
   const rand = rng(seed);
   let melhor = null, melhorNota = -1;
-  for (let t = 0; t < 14; t++) {
+  for (let t = 0; t < (minLetras > 3 ? 40 : 14); t++) {
     const g = gradeAleatoria(rand);
-    const ws = resolver(g, true);
+    const ws = resolver(g, true, false, minLetras);
     let nota = 0;
     for (const w of ws) if (rank.get(w) < 60000) nota += 1 + w.length / 4;
     if (nota > melhorNota) { melhorNota = nota; melhor = g; }
