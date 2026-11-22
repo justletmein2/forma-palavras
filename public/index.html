@@ -105,7 +105,7 @@
       <li>Sem verbos: palavras que são só verbo não valem na rodada.</li>
       <li>Palavras grandes: só valem palavras com 5 letras ou mais.</li>
       <li>Modo Atrapalhar: depois de 1 minuto, a cada 30 segundos quem estiver em último escolhe alguém pra atrapalhar.</li>
-      <li>Travou? Depois de uns segundos sem tentar nada aparece uma dica da menor palavra que falta.</li>
+      <li>Travou? Depois de uns segundos sem tentar nada aparece uma dica da menor palavra que falta (o anfitrião pode desligar as dicas na sala).</li>
       <li>Palavra que só <b>você</b> achou vale o <b>dobro</b>!</li>
     </ul>
   </details>
@@ -176,6 +176,11 @@
       <input type="checkbox" id="chkMin5">
       <span class="trilho"></span>
       <span>Palavras grandes 🐘 <small>(só valem palavras com 5 letras ou mais)</small></span>
+    </label>
+    <label class="chave">
+      <input type="checkbox" id="chkDicas" checked>
+      <span class="trilho"></span>
+      <span>Dicas 💡 <small>(depois de uns segundos sem tentar nada, mostra o começo de uma palavra que falta)</small></span>
     </label>
   </div>
   <button id="btnComecar" class="botao rosa enorme">🚀 Começar!</button>

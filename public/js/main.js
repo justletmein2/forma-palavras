@@ -16,7 +16,7 @@ const GRACA_RECAP = 2500; // espera as últimas palavras chegarem antes de recap
 const S = {
   modo: null,            // 'solo' | 'online'
   code: null, meta: null, players: {}, sairSala: null,
-  round: -1, grid: '', startAt: 0, dur: DURACAO, family: false, semVerbos: false, min5: false,
+  round: -1, grid: '', startAt: 0, dur: DURACAO, family: false, semVerbos: false, min5: false, semDicas: false,
   achadas: new Map(),    // plain -> pontos base
   score: 0, fase: 'inicio', // inicio | sala | contagem | jogando | espera | recap | fim
   ultimaContagem: null,
@@ -457,7 +457,7 @@ const meuPublico = () => ({ name: P.tag, look: P.look, lvl: nivel() });
 
 $('btnSolo').onclick = async () => {
   if (precisaTag()) return;
-  S.modo = 'solo'; S.family = false; S.semVerbos = false; S.min5 = false; S.players = {};
+  S.modo = 'solo'; S.family = false; S.semVerbos = false; S.min5 = false; S.semDicas = false; S.players = {};
   await garantirDicionario();
   novaRodadaSolo();
 };
@@ -579,15 +579,18 @@ function desenharSala() {
   $('chkAtrapalhar').disabled = !host;
   $('chkSemVerbos').checked = !!S.meta.semVerbos;
   $('chkMin5').checked = !!S.meta.min5;
+  $('chkDicas').checked = !S.meta.semDicas;
+  $('chkDicas').disabled = !host;
   $('chkMin5').disabled = !host;
   $('chkSemVerbos').disabled = !host;
   if (S.meta.semVerbos) loadVerbos().catch(() => {}); // já vai baixando a lista enquanto espera
-  $('opcoesHost').hidden = !host && !S.meta.family && !S.meta.atrapalhar && !S.meta.semVerbos && !S.meta.min5;
+  $('opcoesHost').hidden = !host && !S.meta.family && !S.meta.atrapalhar && !S.meta.semVerbos && !S.meta.min5 && !S.meta.semDicas;
 }
 $('chkFamilia').onchange = () => { if (souHost()) net.atualizarMeta(S.code, { family: $('chkFamilia').checked }); };
 $('chkAtrapalhar').onchange = () => { if (souHost()) net.atualizarMeta(S.code, { atrapalhar: $('chkAtrapalhar').checked }); };
 $('chkSemVerbos').onchange = () => { if (souHost()) net.atualizarMeta(S.code, { semVerbos: $('chkSemVerbos').checked }); };
 $('chkMin5').onchange = () => { if (souHost()) net.atualizarMeta(S.code, { min5: $('chkMin5').checked }); };
+$('chkDicas').onchange = () => { if (souHost()) net.atualizarMeta(S.code, { semDicas: !$('chkDicas').checked }); };
 
 $('btnCompartilhar').onclick = async () => {
   const url = location.origin + location.pathname + '?sala=' + S.code;
@@ -608,7 +611,7 @@ async function comecarOnline() {
   await net.atualizarMeta(S.code, {
     status: 'playing', grid: gerarGrade(Date.now(), S.meta.min5 ? 5 : 3), round: (S.meta.round || 0) + 1,
     startAt: net.agora() + 4200, dur: DURACAO, family: !!S.meta.family, recap: null,
-    atrapalhar: !!S.meta.atrapalhar, poder: null, semVerbos: !!S.meta.semVerbos, min5: !!S.meta.min5,
+    atrapalhar: !!S.meta.atrapalhar, poder: null, semVerbos: !!S.meta.semVerbos, min5: !!S.meta.min5, semDicas: !!S.meta.semDicas,
   });
 }
 $('btnComecar').onclick = comecarOnline;
@@ -734,12 +737,12 @@ async function iniciarRodada(m) {
     round: m.round, grid: m.grid, startAt: m.startAt, dur: m.dur || DURACAO, family: !!m.family,
     achadas: new Map(), score: 0, fase: 'contagem', ultimaContagem: null, recap: null, passoAtual: -1, ganhos: null,
     possiveis: null, ultimaTentativa: 0, dicaPalavra: null, dicaNivel: 0,
-    atrapalhar: !!m.atrapalhar, semVerbos: !!m.semVerbos, min5: !!m.min5, ataquesVistos: new Set(), poderVisto: null, concedido: null, espectador,
+    atrapalhar: !!m.atrapalhar, semVerbos: !!m.semVerbos, min5: !!m.min5, semDicas: !!m.semDicas, ataquesVistos: new Set(), poderVisto: null, concedido: null, espectador,
   });
   fx.limpar(); fecharEscolha();
   if (S.semVerbos) loadVerbos().catch(() => toast('Não consegui baixar a lista de verbos. Verifique a internet.', 4000));
-  $('seloSemVerbos').hidden = !S.semVerbos && !S.min5;
-  $('seloSemVerbos').textContent = [S.semVerbos && '🚫 Sem verbos', S.min5 && '🐘 Só 5+ letras'].filter(Boolean).join(' · ');
+  $('seloSemVerbos').hidden = !S.semVerbos && !S.min5 && !S.semDicas;
+  $('seloSemVerbos').textContent = [S.semVerbos && '🚫 Sem verbos', S.min5 && '🐘 Só 5+ letras', S.semDicas && '🙈 Sem dicas'].filter(Boolean).join(' · ');
   $('achadas').innerHTML = '';
   if (salvo) {
     // recupera o que já tinha achado
@@ -856,7 +859,7 @@ function tique() {
     if (seg <= 30) som.setUrgencia(seg <= 10 ? 1.18 : 1.08);
     if (acabando && seg !== S.ultimaContagem && seg > 0) { S.ultimaContagem = seg; som.sfx('tick'); }
     if (resta <= 0) { tab.dica([]); acabouTempo(); }
-    else if (!S.espectador && !tab.segurando() && t - S.ultimaTentativa > ESPERA_DICA) darDica(t);
+    else if (!S.semDicas && !S.espectador && !tab.segurando() && t - S.ultimaTentativa > ESPERA_DICA) darDica(t);
     if (S.modo === 'online' && S.atrapalhar) {
       if (souHost()) concederPoder(t);
       if (S.escolha) {
