@@ -22,3 +22,10 @@
 - Opção da sala (`meta.semVerbos`), ligada pelo anfitrião. A lista fica em `public/verbos.txt`
   (baixada só quando o modo está ligado) e é usada em `lookup`/`resolver` (dict.js).
 - Como a lista foi feita e como ajustar: `tools/README-verbos.md`.
+
+## Sala fixa (CALU)
+
+- `SALAS_FIXAS` em net.js (hoje só `CALU`, do Lucas e da Carol). Digitar o código cria a sala se não
+  existir; o sorteio de código nunca cai nela. Ao entrar, se a última partida já acabou, a sala volta
+  pra tela de espera. Depois da 1ª vez, o aparelho mostra o atalho "💜 Entrar na sala CALU" no início.
+- Na lista de jogadores da sala fixa só aparece quem está online (ela acumula gente antiga).

@@ -182,12 +182,25 @@ export const esqueciSenha = email => B.esqueciSenha(email);
 // ---------- salas ----------
 const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 const sala = c => 'rooms/' + c;
+// salas fixas: não somem e não precisam ser criadas de novo (o sorteio de código nunca cai nelas)
+export const SALAS_FIXAS = ['CALU'];
+
+// Abre uma sala fixa: cria se ainda não existir; se ficou "presa" numa partida que já acabou
+// e o anfitrião não está online, devolve pra tela da sala com você de anfitrião.
+export async function abrirSalaFixa(code) {
+  const meta = await B.get(sala(code) + '/meta');
+  if (!meta) { await B.set(sala(code) + '/meta', { host: uid, status: 'lobby', round: 0, family: false, created: agora() }); return; }
+  const hostOn = meta.host === uid || (await B.get(`${sala(code)}/players/${meta.host}/online`)) === true;
+  const acabou = meta.status !== 'playing' || !meta.startAt || agora() > meta.startAt + (meta.dur || 180) * 1000 + 20000;
+  if (meta.host === uid && acabou && meta.status === 'playing') await B.update(sala(code) + '/meta', { status: 'lobby' }).catch(() => {});
+  else if (!hostOn && acabou) await B.update(sala(code) + '/meta', { host: uid, status: 'lobby' }).catch(() => {});
+}
 
 export async function criarSala() {
   for (let t = 0; t < 8; t++) {
     let code = '';
     for (let i = 0; i < 4; i++) code += CHARS[Math.floor(Math.random() * CHARS.length)];
-    if (await B.get(sala(code) + '/meta')) continue;
+    if (SALAS_FIXAS.includes(code) || await B.get(sala(code) + '/meta')) continue;
     await B.set(sala(code) + '/meta', { host: uid, status: 'lobby', round: 0, family: false, created: agora() });
     return code;
   }

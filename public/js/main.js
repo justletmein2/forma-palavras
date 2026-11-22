@@ -125,6 +125,9 @@ $('btnTema').onclick = () => {
 };
 
 function desenharInicio() {
+  const fixa = salaFixaSalva();
+  $('btnSalaFixa').hidden = !fixa;
+  if (fixa) $('btnSalaFixa').textContent = `💜 Entrar na sala ${fixa}`;
   const temTag = !!P.tag;
   $('perfilResumo').hidden = !temTag;
   $('criarTag').hidden = temTag;
@@ -472,15 +475,27 @@ $('btnEntrar').onclick = async () => {
   const b = $('btnEntrar'); b.disabled = true;
   try {
     await net.conectar();
-    if (!(await net.salaExiste(code))) erroInicio('Não achei essa sala 🤔');
+    if (net.SALAS_FIXAS.includes(code)) { await net.abrirSalaFixa(code); await entrarNaSala(code); }
+    else if (!(await net.salaExiste(code))) erroInicio('Não achei essa sala 🤔');
     else await entrarNaSala(code);
   } catch (e) { erroInicio('Não deu pra entrar: ' + (e.message || e)); }
+  b.disabled = false;
+};
+
+// atalho da sala fixa: aparece no início depois que você entra nela uma vez neste aparelho
+function salaFixaSalva() { try { return localStorage.getItem('cp_salaFixa'); } catch { return null; } }
+$('btnSalaFixa').onclick = async () => {
+  if (precisaTag()) return;
+  const code = salaFixaSalva() || 'CALU', b = $('btnSalaFixa'); b.disabled = true;
+  try { await net.conectar(); await net.abrirSalaFixa(code); await entrarNaSala(code); }
+  catch (e) { erroInicio('Não deu pra entrar: ' + (e.message || e)); }
   b.disabled = false;
 };
 
 async function entrarNaSala(code) {
   S.modo = 'online'; S.code = code; S.round = -1; S.fase = 'sala';
   try { sessionStorage.setItem('cp_sala', code); } catch {}
+  if (net.SALAS_FIXAS.includes(code)) try { localStorage.setItem('cp_salaFixa', code); } catch {}
   const q = new URLSearchParams(location.search); q.set('sala', code);
   history.replaceState(null, '', '?' + q);
   $('codigoSala').textContent = code;
@@ -544,7 +559,8 @@ function aoMudarSala(estado) {
 }
 
 function desenharSala() {
-  const lista = Object.entries(S.players).sort((a, b) => (a[1].joined || 0) - (b[1].joined || 0));
+  const fixa = net.SALAS_FIXAS.includes(S.code);
+  const lista = Object.entries(S.players).filter(([id, p]) => !fixa || p.online || id === net.meuId()).sort((a, b) => (a[1].joined || 0) - (b[1].joined || 0));
   $('listaJog').innerHTML = lista.map(([id, p]) => `
     <li class="${p.online ? '' : 'fora'}">
       ${avatarSVG(p.look, 44)}<span class="nome-jog">${esc(p.name)}</span><small class="nv">Nv ${p.lvl || 1}</small>
