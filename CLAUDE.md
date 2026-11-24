@@ -29,3 +29,13 @@
   existir; o sorteio de código nunca cai nela. Ao entrar, se a última partida já acabou, a sala volta
   pra tela de espera. Depois da 1ª vez, o aparelho mostra o atalho "💜 Entrar na sala CALU" no início.
 - Na lista de jogadores da sala fixa só aparece quem está online (ela acumula gente antiga).
+
+## Boneco compartilhado (portal e outros jogos usam daqui)
+
+- `public/js/avatar.js`: o desenho do boneco. Os olhos e a boca ficam em grupos `.av-olhos` / `.av-boca`
+  (pra piscar e falar). Mudanças aqui aparecem no portal, no Pé na Tábua, na Torre Bamba e no Palhetada.
+- `public/js/boneco-vivo.js`: faz o boneco piscar sozinho e mexer a boca (`darVida(el).falar(ms)`).
+- `public/js/boneco-editor.js`: a tela única de "Personalizar boneco" usada pelo portal e pelos jogos
+  (menos a Cripta). Quem chama passa o perfil e a função de salvar. O Forma Palavras continua com o
+  editor próprio (que também escolhe comemoração e frase); o perfil é o mesmo.
+- Não renomeie esses arquivos nem tire exportações sem atualizar os outros repositórios.
