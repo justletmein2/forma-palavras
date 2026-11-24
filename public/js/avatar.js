@@ -254,7 +254,7 @@ export function avatarSVG(look = {}, tam = 64, opts = {}) {
     estrela: [41, 59].map(x => `<path transform="translate(${x} 48) scale(.55)" d="M0 -9 L2.6 -3 9 -2.8 4 1.6 5.6 8 0 4.4 -5.6 8 -4 1.6 -9 -2.8 -2.6 -3Z" fill="#ffc400" stroke="${esc}" stroke-width="1.4"/>`).join(''),
     coracao: [41, 59].map(x => `<path transform="translate(${x} 48) scale(.5)" d="M0 7 C-12 -1 -7 -10 0 -4 C7 -10 12 -1 0 7Z" fill="#ff3d7f"/>`).join(''),
   }[L.olhos] || '';
-  if (!['alien', 'robo'].includes(L.tipo)) s.push(olhos);
+  if (!['alien', 'robo'].includes(L.tipo)) s.push(`<g class="av-olhos">${olhos}</g>`); // grupos: dá pra piscar/falar (boneco-vivo.js)
   if (L.acessorio !== 'escuros') s.push(`<ellipse cx="35" cy="56" rx="4" ry="2.4" fill="#ff7e9e" opacity=".45"/><ellipse cx="65" cy="56" rx="4" ry="2.4" fill="#ff7e9e" opacity=".45"/>`);
 
   // barba (fica atrás da boca)
@@ -267,15 +267,15 @@ export function avatarSVG(look = {}, tam = 64, opts = {}) {
     lenhador: `<path d="M26 44 Q24 86 50 90 Q76 86 74 44 Q68 62 58 59 Q50 56 42 59 Q32 62 26 44Z" fill="${cab}"/>`,
   }[L.barba] || '');
   // boca (ou focinho/bico)
-  if (bicho) s.push(focinho(L));
-  else s.push({
+  if (bicho) s.push(`<g class="av-boca">${focinho(L)}</g>`);
+  else s.push('<g class="av-boca">' + ({
     sorriso: `<path d="M43 58 Q50 64 57 58" fill="none" stroke="${esc}" stroke-width="2.4" stroke-linecap="round"/>`,
     risada: `<path d="M42 57 Q50 68 58 57 Z" fill="${esc}"/><path d="M45 61 Q50 64 55 61" fill="#ff7e9e"/>`,
     o: `<ellipse cx="50" cy="60" rx="3" ry="3.6" fill="${esc}"/>`,
     lingua: `<path d="M43 58 Q50 63 57 58" fill="none" stroke="${esc}" stroke-width="2.4" stroke-linecap="round"/><path d="M48 60.5 Q50 67 53 60.5Z" fill="#ff5f7e"/>`,
     dentuco: `<path d="M43 57 Q50 64 57 57" fill="${esc}"/><rect x="47.3" y="57.5" width="5.4" height="4.4" rx="1" fill="#fff"/>`,
     gato: `<path d="M43 58 Q46.5 61 50 58 Q53.5 61 57 58" fill="none" stroke="${esc}" stroke-width="2.4" stroke-linecap="round"/>`,
-  }[L.boca] || '');
+  }[L.boca] || '') + '</g>');
 
   // cabelo da frente
   const frente = {
@@ -334,7 +334,7 @@ export function avatarSVG(look = {}, tam = 64, opts = {}) {
   }[L.chapeu] || '');
   if (!bicho && L.roupa === 'astronauta') s.push(`<circle cx="50" cy="46" r="31" fill="rgba(180,220,255,.22)" stroke="#dfe6f2" stroke-width="3"/><path d="M33 28 Q40 22 48 21" stroke="#fff" stroke-width="3" fill="none" opacity=".8" stroke-linecap="round"/>`);
   s.push('</g>');
-  return `<svg class="boneco" viewBox="0 0 100 100" width="${tam}" height="${tam}" role="img" aria-label="avatar">${s.join('')}</svg>`;
+  return `<svg class="boneco av-${L.tipo}" viewBox="0 0 100 100" width="${tam}" height="${tam}" role="img" aria-label="avatar">${s.join('')}</svg>`;
 }
 const BASE = { tipo: 'pessoa', barba: 'nada', plumagem: 'sanhaco', pelagem: 'laranja', orelhas: 'medias', corAlien: 'verde', modeloAlien: 'antenas', corRobo: 'prata', modeloRobo: 'quadrado',  pele: 'p2', cabelo: 'curto', corCabelo: 'castanho', olhos: 'normal', boca: 'sorriso', roupa: 'camiseta', corRoupa: 'azul', chapeu: 'nada', acessorio: 'nada', fundo: 'lilas' };
 
@@ -450,7 +450,7 @@ function desenharAlien(L, roupa) {
     <path d="M33 76 Q50 84 67 76" fill="none" stroke="#e8edf6" stroke-width="3.4" stroke-linecap="round"/>
     <circle cx="50" cy="90" r="5" fill="#e8edf6"/><circle cx="50" cy="90" r="2.6" fill="${claro}"/>
     <rect x="44" y="62" width="12" height="14" rx="4" fill="${c}"/>
-    <g${brilho}>${atras}${cabeca}</g>${estrelas}${extra}${olhos}`;
+    <g${brilho}>${atras}${cabeca}</g>${estrelas}<g class="av-olhos">${extra}${olhos}</g>`;
 }
 
 // ---------- robô ----------
