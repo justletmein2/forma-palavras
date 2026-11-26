@@ -1,7 +1,7 @@
 // Service worker: deixa o jogo abrir sem internet (treino sozinho) e carregar mais rápido.
 // Código do jogo: tenta a rede primeiro (sempre a versão nova) e usa a cópia guardada se cair.
 // Dicionário, imagens e fontes: usa a cópia guardada e atualiza por trás.
-const CACHE = 'forma-palavras-v2';
+const CACHE = 'forma-palavras-v3';
 const BASICO = ['./', 'index.html', 'style.css', 'manifest.json', 'palavras.txt', 'palavroes.txt',
   'js/main.js', 'js/net.js', 'js/dict.js', 'js/board.js', 'js/avatar.js', 'js/recap.js',
   'js/efeitos.js', 'js/audio.js', 'js/trofeus.js', 'js/significado.js', 'js/config.js', 'icone-192.png', 'apple-touch-icon.png'];
@@ -26,6 +26,7 @@ self.addEventListener('fetch', e => {
   const url = new URL(req.url);
   const fonte = url.host === 'fonts.googleapis.com' || url.host === 'fonts.gstatic.com';
   if (url.origin !== location.origin && !fonte) return; // Firebase e o resto: direto pela rede
+  if (/\.(m4a|mp3)$/.test(url.pathname)) return; // música: o navegador baixa em pedaços, sem passar por aqui
   const lento = fonte || /\.(txt|png|jpg)$/.test(url.pathname);
   if (lento) {
     e.respondWith(caches.match(req, { ignoreSearch: !fonte }).then(c => {

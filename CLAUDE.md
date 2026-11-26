@@ -39,3 +39,18 @@
   (menos a Cripta). Quem chama passa o perfil e a função de salvar. O Forma Palavras continua com o
   editor próprio (que também escolhe comemoração e frase); o perfil é o mesmo.
 - Não renomeie esses arquivos nem tire exportações sem atualizar os outros repositórios.
+
+## Música da partida (arquivo gravado)
+
+- `public/musica/partida.m4a` (~2,4 MB, 3min13): feita na Suno pelo Lucas e montada a partir de 3 faixas
+  da conta dele ("Forma Palavras - Partida (chill)", "(produzida)" e "(perseguição)", mesmo andamento,
+  161 BPM). Calma até ~1:06, transição pro remix produzido, transição pra perseguição em ~1:59.
+  A aceleração (1,08× faltando 45 s e 1,15× faltando 10 s, sem mudar o tom) já está GRAVADA no arquivo,
+  pensada pra partida de 180 s: o segundo X do arquivo = X segundos depois do "JÁ!".
+- audio.js: `prepararFaixa()` cria o `<audio>` no primeiro toque (exigência do iPhone) e passa pelo Web Audio
+  (`musicBus`, então o botão de música vale). `sincronizarPartida(seg)` é chamado a cada tique da partida:
+  começa a tocar no ponto certo e corrige se escorregar. Arquivo ainda não baixou → toca o sintetizador.
+- O service worker NÃO guarda .m4a/.mp3 (o navegador pede o áudio em pedaços; o servidor precisa aceitar
+  "Range" pra pular pro meio — o GitHub Pages aceita, o `python3 -m http.server` não: teste com
+  `python3 -m RangeHTTPServer`).
+- Pra trocar a música: gere o arquivo com o mesmo formato (acelerações já gravadas) e substitua.

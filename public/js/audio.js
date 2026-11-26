@@ -17,8 +17,53 @@ export function unlockAudio() {
     master = ctx.createGain(); master.gain.value = 0.9; master.connect(ctx.destination);
     musicBus = ctx.createGain(); musicBus.gain.value = musicOn ? 0.32 : 0; musicBus.connect(master);
     sfxBus = ctx.createGain(); sfxBus.gain.value = sfxOn ? 0.6 : 0; sfxBus.connect(master);
+    prepararFaixa();
   }
   if (ctx.state === 'suspended') ctx.resume();
+}
+
+// ---------- música gravada da partida ----------
+// Um arquivo só (feito na Suno): calma, remix produzido e perseguição, com as transições
+// e a aceleração (faltando 45 s e 10 s) já gravadas. O jogo só toca sincronizado com o relógio
+// da partida. Enquanto o arquivo não chegou, toca a música de sintetizador no lugar.
+const ARQ_PARTIDA = 'musica/partida.m4a';
+const VOL_FAIXA = 1.6; // o arquivo é mais baixo que o sintetizador; equilibra
+let faixa = null, faixaGanho = null, faixaTocando = false, ultimoAjuste = 0;
+function prepararFaixa() {
+  // criado durante um toque na tela: o iPhone só deixa tocar áudio assim
+  if (faixa || typeof Audio === 'undefined') return;
+  try {
+    faixa = new Audio(ARQ_PARTIDA);
+    faixa.preload = 'auto';
+    const no = ctx.createMediaElementSource(faixa);
+    faixaGanho = ctx.createGain(); faixaGanho.gain.value = 0;
+    no.connect(faixaGanho); faixaGanho.connect(musicBus);
+    faixa.play().then(() => { if (!faixaTocando) faixa.pause(); }).catch(() => {});
+  } catch { faixa = null; }
+}
+const faixaPronta = () => faixa && faixa.readyState >= 3 && !faixa.error;
+// Chamado a cada instante da partida com os segundos desde o "JÁ!"
+export function sincronizarPartida(seg) {
+  if (!faixa || !ctx || musica !== MUSICAS.partida && musica !== SILENCIO) return;
+  if (!faixaTocando) {
+    if (!faixaPronta() || seg >= faixa.duration - 1) return; // ainda baixando: segue o sintetizador
+    faixaTocando = true; ultimoAjuste = performance.now();
+    faixa.currentTime = Math.max(0, seg);
+    faixa.play().catch(() => { faixaTocando = false; });
+    faixaGanho.gain.cancelScheduledValues(ctx.currentTime);
+    faixaGanho.gain.setTargetAtTime(VOL_FAIXA, ctx.currentTime, seg < 1 ? 0.02 : 0.4);
+    musica = SILENCIO; // cala o sintetizador
+  } else if (!faixa.paused && !faixa.seeking && faixa.readyState >= 3 && performance.now() - ultimoAjuste > 3000
+    && Math.abs(faixa.currentTime - seg) > 0.6) {
+    ultimoAjuste = performance.now();
+    faixa.currentTime = seg; // escorregou (aba em segundo plano, travada): volta pro lugar
+  }
+}
+function pararFaixa() {
+  if (!faixa || !faixaTocando) return;
+  faixaTocando = false;
+  faixaGanho.gain.setTargetAtTime(0, ctx.currentTime, 0.25);
+  setTimeout(() => { if (!faixaTocando) faixa.pause(); }, 1500);
 }
 
 export function isMusicOn() { return musicOn; }
@@ -131,6 +176,7 @@ const MUSICAS = {
     },
   },
 };
+const SILENCIO = { bpm: 120, tocar() {} }; // enquanto a música gravada toca
 let musica = MUSICAS.menu, urgencia = 1;
 
 function schedule() {
@@ -153,8 +199,11 @@ export function startMusic() {
 export function setMusica(nome) {
   const nova = MUSICAS[nome] || MUSICAS.menu;
   urgencia = 1;
-  if (nova === musica) { tempo = musica.bpm; return; }
-  musica = nova; tempo = musica.bpm;
+  pararFaixa();
+  // partida com o arquivo já baixado: silêncio na contagem, a música gravada entra no "JÁ!"
+  const alvo = nome === 'partida' && faixaPronta() ? SILENCIO : nova;
+  if (alvo === musica) { tempo = musica.bpm; return; }
+  musica = alvo; tempo = musica.bpm;
   if (timer && ctx) { step = 0; nextTime = Math.max(nextTime, ctx.currentTime + 0.12); }
 }
 // Fim do tempo chegando: acelera a música atual (1 = normal)

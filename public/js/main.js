@@ -856,7 +856,8 @@ function tique() {
     $('txtTempo').textContent = `${Math.floor(seg / 60)}:${String(seg % 60).padStart(2, '0')}`;
     const acabando = seg <= 10;
     $('barraTempo').parentElement.classList.toggle('acabando', acabando);
-    if (seg <= 30) som.setUrgencia(seg <= 10 ? 1.18 : 1.08);
+    som.sincronizarPartida((t - S.startAt) / 1000);
+    if (seg <= 45) som.setUrgencia(seg <= 10 ? 1.18 : 1.08); // só vale pro sintetizador (a gravada já acelera sozinha)
     if (acabando && seg !== S.ultimaContagem && seg > 0) { S.ultimaContagem = seg; som.sfx('tick'); }
     if (resta <= 0) { tab.dica([]); acabouTempo(); }
     else if (!S.semDicas && !S.espectador && !tab.segurando() && t - S.ultimaTentativa > ESPERA_DICA) darDica(t);
