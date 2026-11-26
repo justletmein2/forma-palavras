@@ -24,7 +24,7 @@ export function unlockAudio() {
 
 // ---------- música gravada da partida ----------
 // Um arquivo só (feito na Suno): calma, remix produzido e perseguição, com as transições
-// e a aceleração (faltando 45 s e 10 s) já gravadas. O jogo só toca sincronizado com o relógio
+// e a aceleração (1,08× nos 45 s finais) já gravadas. O jogo só toca sincronizado com o relógio
 // da partida. Enquanto o arquivo não chegou, toca a música de sintetizador no lugar.
 const ARQ_PARTIDA = 'musica/partida.m4a';
 const VOL_FAIXA = 1.6; // o arquivo é mais baixo que o sintetizador; equilibra
